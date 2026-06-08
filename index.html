@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Master Data Agent- Internal Order</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #eef2f7;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+
+    /* ══ HEADER ══════════════════════════════════════════════════════════════ */
+    .header {
+      background: linear-gradient(135deg, #0a6ed1 0%, #054a8c 100%);
+      color: #fff;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      box-shadow: 0 3px 12px rgba(10,110,209,.35);
+      z-index: 10;
+    }
+    .header-logo {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,.15);
+      border: 2px solid rgba(255,255,255,.4);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #fff; font-size: 12px;
+      letter-spacing: -.5px;
+    }
+    .header-title { font-size: 15px; font-weight: 700; flex: 1; letter-spacing: -.2px; }
+    .header-badge {
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .6px;
+    }
+    .header-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; opacity: .9;
+      background: rgba(255,255,255,.1);
+      padding: 4px 10px; border-radius: 20px;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4cdb7a; box-shadow: 0 0 6px #4cdb7a; }
+
+    /* ══ LAYOUT ══════════════════════════════════════════════════════════════ */
+    .layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+
+    /* ══ SIDEBAR ══════════════════════════════════════════════════════════════ */
+    .sidebar {
+      width: 230px;
+      background: #fff;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    .sidebar-logo-row {
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 11px; font-weight: 700;
+    }
+    .sidebar-logo-text { font-size: 12px; font-weight: 700; color: #1a202c; line-height: 1.3; }
+    .sidebar-logo-sub  { font-size: 10px; color: #718096; }
+
+    .sidebar-section {
+      padding: 14px 16px 5px;
+      font-size: 10px; color: #a0aec0; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .8px;
+    }
+    .sidebar-item {
+      padding: 9px 14px;
+      font-size: 13px; color: #4a5568;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      transition: all .15s;
+      border-radius: 8px;
+      margin: 1px 8px;
+      font-weight: 500;
+    }
+    .sidebar-item:hover { background: #ebf4ff; color: #0a6ed1; }
+    .sidebar-item.active {
+      background: linear-gradient(135deg, #ebf4ff, #dbeafe);
+      color: #0a6ed1; font-weight: 600;
+      box-shadow: inset 3px 0 0 #0a6ed1;
+    }
+    .sidebar-item-icon { font-size: 15px; width: 20px; text-align: center; }
+    .sidebar-item-badge {
+      margin-left: auto;
+      background: #e53e3e; color: #fff;
+      border-radius: 10px; padding: 1px 7px;
+      font-size: 10px; font-weight: 700;
+    }
+
+    /* ── Audit Panel ── */
+    .audit-panel {
+      margin-top: auto;
+      border-top: 1px solid #e2e8f0;
+      padding: 12px 14px;
+      background: #f8fafc;
+    }
+    .audit-title {
+      font-size: 11px; font-weight: 700; color: #4a5568;
+      margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .audit-entry {
+      font-size: 11px; color: #718096;
+      padding: 6px 0;
+      border-bottom: 1px solid #e2e8f0;
+      line-height: 1.5;
+    }
+    .audit-entry:last-child { border-bottom: none; }
+    .audit-action { color: #0a6ed1; font-weight: 700; }
+
+    /* ══ CHAT AREA ══════════════════════════════════════════════════════════════ */
+    .chat-area {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      background: #eef2f7;
+    }
+
+    /* ── Toolbar bar ── */
+    .toolbar {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 8px 20px;
+      display: flex; align-items: center;
+      gap: 6px; flex-wrap: wrap;
+      flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+    .toolbar-label { font-size: 12px; color: #718096; font-weight: 500; margin-right: 4px; white-space: nowrap; }
+    .scenario-btn {
+      padding: 6px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px;
+      background: #f8fafc;
+      font-size: 12px; font-weight: 500;
+      cursor: pointer; color: #4a5568;
+      transition: all .15s; font-family: inherit;
+    }
+    .scenario-btn:hover { border-color: #0a6ed1; color: #0a6ed1; background: #ebf4ff; }
+    .scenario-btn.active {
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      border-color: transparent; color: #fff;
+      box-shadow: 0 2px 8px rgba(10,110,209,.3);
+    }
+    .reset-btn {
+      margin-left: auto;
+      padding: 6px 14px;
+      border: 1.5px solid #fc8181;
+      border-radius: 20px; background: #fff5f5;
+      font-size: 12px; font-weight: 500; color: #e53e3e;
+      cursor: pointer; transition: all .15s; font-family: inherit;
+    }
+    .reset-btn:hover { background: #e53e3e; color: #fff; }
+
+    /* ── Alert banner ── */
+    .alert-banner {
+      margin: 8px 16px 0;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .alert-banner.warning { background: #fffbeb; border: 1.5px solid #f6ad55; color: #744210; }
+    .alert-banner.info    { background: #ebf8ff; border: 1.5px solid #63b3ed; color: #2b6cb0; }
+    .alert-banner.hidden  { display: none; }
+
+    /* ══ MESSAGES ══════════════════════════════════════════════════════════════ */
+    .messages {
+      flex: 1 1 0; height: 0; min-height: 0;
+      overflow-y: auto; overflow-x: hidden;
+      padding: 20px 20px 12px;
+      display: flex; flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    /* ── Message row ── */
+    .msg { display: flex; gap: 12px; max-width: 78%; min-width: 0; animation: fadeUp .25s ease; }
+    .msg.user { align-self: flex-end; flex-direction: row-reverse; max-width: 62%; }
+    .msg.joule { align-self: flex-start; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Avatar ── */
+    .avatar {
+      width: 36px; height: 36px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .avatar.joule {
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      color: #fff; box-shadow: 0 2px 8px rgba(10,110,209,.3);
+    }
+    .avatar.user {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff; box-shadow: 0 2px 8px rgba(102,126,234,.3);
+    }
+
+    /* ── Bubble ── */
+    .bubble {
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 13.5px; line-height: 1.6; color: #2d3748;
+      min-width: 0; overflow-x: hidden;
+    }
+    .msg.joule .bubble {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-top-left-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    .msg.user .bubble {
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      color: #fff;
+      border-top-right-radius: 4px;
+      box-shadow: 0 2px 12px rgba(10,110,209,.25);
+    }
+
+    /* ── Timestamp ── */
+    .msg-meta { font-size: 10px; color: #a0aec0; margin-top: 4px; text-align: right; }
+    .msg.joule .msg-meta { text-align: left; }
+
+    /* ══ TABLE ══════════════════════════════════════════════════════════════ */
+    .data-table {
+      width: 100%; border-collapse: collapse;
+      margin: 10px 0; font-size: 12.5px;
+      display: block; overflow-x: auto;
+      border-radius: 8px; overflow: hidden;
+    }
+    .data-table th {
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      color: #fff; text-align: left;
+      padding: 9px 12px; font-weight: 600; font-size: 12px;
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 8px 12px; border-bottom: 1px solid #edf2f7;
+      color: #2d3748; vertical-align: middle;
+    }
+    .data-table tr:nth-child(even) td { background: #f8fafc; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #ebf4ff; }
+
+    /* ══ CHIPS ══════════════════════════════════════════════════════════════ */
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11.5px; font-weight: 600;
+    }
+    .chip.success { background: #c6f6d5; color: #276749; }
+    .chip.warning { background: #fefcbf; color: #744210; }
+    .chip.info    { background: #bee3f8; color: #2b6cb0; }
+    .chip.pending { background: #fed7d7; color: #9b2335; }
+    .chip.active  { background: #c6f6d5; color: #276749; }
+
+    /* ══ STEPS ══════════════════════════════════════════════════════════════ */
+    .steps { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+    .step {
+      display: flex; align-items: center; gap: 10px;
+      background: #f8fafc; border-radius: 8px;
+      padding: 7px 12px; font-size: 13px; color: #2d3748;
+    }
+    .step.done { border-left: 3px solid #48bb78; }
+    .step.done .step-text { color: #276749; }
+    .step.pending-step { border-left: 3px solid #e2e8f0; }
+    .step.pending-step .step-text { color: #a0aec0; }
+    .step-icon { font-size: 14px; }
+
+    /* ══ WORKFLOW ══════════════════════════════════════════════════════════════ */
+    .workflow { display: flex; flex-direction: column; gap: 0; margin: 10px 0; }
+    .wf-node {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 12px; background: #f8fafc;
+      border-radius: 8px; font-size: 13px; color: #2d3748;
+      margin-bottom: 2px;
+    }
+    .wf-node.wf-done { background: #f0fff4; }
+    .wf-arrow { color: #a0aec0; font-size: 12px; padding-left: 22px; margin: -2px 0; }
+    .wf-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #cbd5e0; flex-shrink: 0;
+      border: 2px solid #e2e8f0;
+    }
+    .wf-dot.done { background: #48bb78; border-color: #48bb78; box-shadow: 0 0 6px rgba(72,187,120,.4); }
+    .wf-dot.pending { background: #fff; border: 2px dashed #a0aec0; }
+
+    /* ══ CONFIRM BOX ══════════════════════════════════════════════════════════════ */
+    .confirm-box {
+      background: linear-gradient(135deg, #ebf8ff, #e6fffa);
+      border: 1.5px solid #63b3ed;
+      border-radius: 12px; padding: 16px; margin: 10px 0;
+    }
+    .confirm-box p { font-size: 13px; margin-bottom: 6px; color: #2d3748; }
+    .confirm-box p:last-of-type { margin-bottom: 0; }
+    .confirm-label {
+      font-weight: 700; font-size: 13.5px; color: #2b6cb0;
+      margin-top: 12px; padding: 10px 14px;
+      background: rgba(255,255,255,.7); border-radius: 8px;
+      border: 1px dashed #63b3ed;
+    }
+
+    /* ══ SUCCESS CARD ══════════════════════════════════════════════════════════════ */
+    .success-card {
+      background: linear-gradient(135deg, #f0fff4, #e6fffa);
+      border: 1.5px solid #68d391;
+      border-radius: 12px; padding: 16px; margin: 10px 0;
+    }
+    .success-card .io-id { font-size: 22px; font-weight: 800; color: #276749; margin-bottom: 10px; }
+
+    /* ══ QUICK REPLIES ══════════════════════════════════════════════════════════════ */
+    .quick-replies {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+      padding-top: 12px; border-top: 1px solid #e2e8f0;
+    }
+    .qr-btn {
+      padding: 8px 16px;
+      border: 1.5px solid #0a6ed1;
+      border-radius: 20px;
+      background: #fff; color: #0a6ed1;
+      font-size: 12.5px; font-weight: 600;
+      cursor: pointer; transition: all .15s;
+      font-family: inherit;
+      box-shadow: 0 1px 4px rgba(10,110,209,.1);
+    }
+    .qr-btn:hover {
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 3px 10px rgba(10,110,209,.3);
+      transform: translateY(-1px);
+    }
+    .qr-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    /* ══ MANUAL FORM ══════════════════════════════════════════════════════════════ */
+    .io-form {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-top: 12px;
+      padding: 14px; background: #f8fafc;
+      border-radius: 12px; border: 1px solid #e2e8f0;
+    }
+    .io-form .form-row-full { grid-column: 1 / -1; }
+    .form-row { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 11.5px; font-weight: 600; color: #4a5568; }
+    .form-input, .form-select {
+      padding: 8px 12px;
+      border: 1.5px solid #e2e8f0; border-radius: 8px;
+      font-size: 13px; color: #2d3748; background: #fff;
+      outline: none; transition: border-color .15s;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus { border-color: #0a6ed1; box-shadow: 0 0 0 3px rgba(10,110,209,.1); }
+    .form-submit {
+      grid-column: 1 / -1;
+      margin-top: 4px; padding: 10px 20px;
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      box-shadow: 0 3px 10px rgba(10,110,209,.3);
+      transition: all .15s;
+    }
+    .form-submit:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(10,110,209,.4); }
+
+    /* ══ TYPING INDICATOR ══════════════════════════════════════════════════════════════ */
+    .typing { display: flex; gap: 5px; align-items: center; padding: 4px 2px; }
+    .typing span {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #0a6ed1; opacity: .4;
+      animation: bounce .9s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .15s; }
+    .typing span:nth-child(3) { animation-delay: .30s; }
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); opacity: .4; }
+      40% { transform: translateY(-7px); opacity: 1; }
+    }
+
+    /* ══ INPUT BAR ══════════════════════════════════════════════════════════════ */
+    .input-bar {
+      padding: 12px 20px;
+      border-top: 1px solid #e2e8f0;
+      background: #fff;
+      display: flex; gap: 10px; align-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 -2px 8px rgba(0,0,0,.05);
+    }
+    .input-bar input {
+      flex: 1; padding: 11px 18px;
+      border: 1.5px solid #e2e8f0; border-radius: 24px;
+      font-size: 13.5px; outline: none;
+      transition: all .15s; font-family: inherit;
+      color: #2d3748; background: #f8fafc;
+    }
+    .input-bar input:focus {
+      border-color: #0a6ed1; background: #fff;
+      box-shadow: 0 0 0 3px rgba(10,110,209,.1);
+    }
+    .input-bar input::placeholder { color: #a0aec0; }
+    .send-btn {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; color: #fff;
+      box-shadow: 0 3px 10px rgba(10,110,209,.3);
+      transition: all .15s;
+    }
+    .send-btn:hover { transform: scale(1.08); box-shadow: 0 5px 16px rgba(10,110,209,.4); }
+    .send-btn:disabled { background: #e2e8f0; color: #a0aec0; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ══ SCROLLBARS ══════════════════════════════════════════════════════════════ */
+    .messages::-webkit-scrollbar { width: 6px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+    .messages::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+
+    .data-table::-webkit-scrollbar { height: 6px; }
+    .data-table::-webkit-scrollbar-track { background: #f8fafc; border-radius: 3px; }
+    .data-table::-webkit-scrollbar-thumb { background: #0a6ed1; border-radius: 3px; }
+
+    /* ══ EMPTY STATE ══════════════════════════════════════════════════════════════ */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex: 1; color: #a0aec0; gap: 8px; padding: 40px;
+      text-align: center;
+    }
+    .empty-state-icon { font-size: 40px; opacity: .5; }
+    .empty-state-text { font-size: 14px; font-weight: 500; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-logo">MDA</div>
+  <div class="header-title">Master Data Agent — Internal Order</div>
+  <div class="header-badge">AI AGENT</div>
+  <div class="header-status"><div class="status-dot"></div>Connected to S/4HANA</div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo-row">
+      <div class="sidebar-logo-icon">IO</div>
+      <div>
+        <div class="sidebar-logo-text">Internal Orders</div>
+        <div class="sidebar-logo-sub">SAP S/4HANA · DE01</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Actions</div>
+    <div class="sidebar-item active" onclick="loadScenario('create')">
+      <span class="sidebar-item-icon">➕</span> Create IO
+    </div>
+    <div class="sidebar-item" onclick="loadScenario('change')">
+      <span class="sidebar-item-icon">✏️</span> Change IO
+    </div>
+    <div class="sidebar-item" onclick="loadScenario('close')">
+      <span class="sidebar-item-icon">🔒</span> Close IO
+    </div>
+    <div class="sidebar-item" onclick="loadScenario('query')">
+      <span class="sidebar-item-icon">🔍</span> Query IO
+    </div>
+    <div class="sidebar-item" onclick="loadScenario('advise')">
+      <span class="sidebar-item-icon">💡</span> Advise Me
+    </div>
+
+    <div class="sidebar-section">Monitoring</div>
+    <div class="sidebar-item" onclick="triggerAlert('budget')">
+      <span class="sidebar-item-icon">⚠️</span> Budget Alerts
+      <span class="sidebar-item-badge">2</span>
+    </div>
+    <div class="sidebar-item" onclick="triggerAlert('expiry')">
+      <span class="sidebar-item-icon">📅</span> Expiry Alerts
+      <span class="sidebar-item-badge">3</span>
+    </div>
+    <div class="sidebar-item" onclick="triggerAlert('activity')">
+      <span class="sidebar-item-icon">🔔</span> Activity Alerts
+      <span class="sidebar-item-badge">1</span>
+    </div>
+    <div class="sidebar-item" onclick="triggerAlert('governance')">
+      <span class="sidebar-item-icon">🛡️</span> Governance Alerts
+      <span class="sidebar-item-badge">1</span>
+    </div>
+
+    <!-- Audit trail -->
+    <div class="audit-panel">
+      <div class="audit-title">📋 Audit Trail</div>
+      <div id="auditLog">
+        <div class="audit-entry" style="color:#a0aec0;font-style:italic;">No actions yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat area -->
+  <div class="chat-area">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <span class="toolbar-label">Quick actions:</span>
+      <button class="scenario-btn active" onclick="loadScenario('create')">➕ Create IO</button>
+      <button class="scenario-btn" onclick="loadScenario('change')">✏️ Change IO</button>
+      <button class="scenario-btn" onclick="loadScenario('close')">🔒 Close IO</button>
+      <button class="scenario-btn" onclick="loadScenario('query')">🔍 Query IO</button>
+      <button class="scenario-btn" onclick="loadScenario('advise')">💡 Advise Me</button>
+      <button class="reset-btn" onclick="resetChat()">↺ Reset</button>
+    </div>
+
+    <!-- Alert banner -->
+    <div class="alert-banner hidden" id="alertBanner"></div>
+
+    <!-- Messages -->
+    <div class="messages" id="messages"></div>
+
+    <!-- Input -->
+    <div class="input-bar">
+      <input type="text" id="userInput" placeholder="Type your message or click an action button above…" onkeydown="if(event.key==='Enter')sendMessage()" />
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+const state = {
+  scenario: 'create',
+  step: 0,
+  data: {},
+  auditLog: [],
+  pendingIO: null,
+};
+
+// ── Scenario definitions ──────────────────────────────────────────────────────
+const scenarios = {}; // populated after functions are defined below
+
+function createScenario() {
+  return [
+    // step 0 – greeting
+    {
+      joule: () => ({
+        text: 'Hello! I\'m your Master Data Agent- Internal Order assistant. I can help you create, change, close, and query Internal Orders.\n\nTo get started, tell me what you\'d like to do — for example:<br><br><em>"Create a new Internal Order for the AI Transformation Program."</em>',
+        quickReplies: ['Create a new Internal Order for the AI Transformation Program'],
+      }),
+      match: /create|new|internal order/i,
+    },
+    // step 1 – ask for details
+    {
+      joule: () => ({
+        text: 'I can help create a new Internal Order.<br><br>To proceed, I need:<ul style="margin:8px 0 0 18px"><li>Order Description</li><li>Responsible Cost Center</li><li>Order Manager</li><li>Company Code</li><li>Budget Amount</li><li>Validity Period</li><li>Investment or Expense Type</li></ul><br>Would you like me to suggest values based on similar Internal Orders?',
+        quickReplies: ['Yes, suggest values', 'No, I will enter manually'],
+      }),
+      match: /.+/,
+      before: (input) => {
+        state.data.manualEntry = /manual|no,|no i/i.test(input);
+      },
+    },
+    // step 2 – suggestions OR manual form
+    {
+      joule: () => {
+        if (state.data.manualEntry) {
+          return {
+            text: 'Please fill in the Internal Order details below:',
+            manualForm: true,
+          };
+        }
+        return {
+          text: 'Based on historical Internal Orders and organizational data, here are my recommendations:',
+          table: {
+            rows: [
+              ['Company Code', 'DE01'],
+              ['Controlling Area', 'A100'],
+              ['Order Type', 'Project Order'],
+              ['Responsible Cost Center', 'Global Innovation'],
+              ['Currency', 'EUR'],
+              ['Valid From', '01-Jul-2026'],
+              ['Valid To', '31-Dec-2027'],
+            ]
+          },
+          extraText: 'I found the following potential order managers:<br><br>• <b>Anna Mueller</b><br>• Michael Weber<br>• John Smith<br><br>Please select the responsible manager and confirm the budget.',
+          quickReplies: ['Assign Anna Mueller and budget EUR 500,000', 'Assign Michael Weber and budget EUR 300,000'],
+        };
+      },
+      match: /yes|suggest|recommend/i,
+    },
+    // step 3 – review
+    {
+      joule: () => {
+        const mgr    = state.data.manager    || 'Anna Mueller';
+        const budget = state.data.budget     || 'EUR 500,000';
+        const desc   = state.data.desc       || 'AI Transformation Program';
+        const cc     = state.data.costCenter || 'Global Innovation';
+        const code   = state.data.companyCode|| 'DE01';
+        const from   = state.data.validFrom  || '01-Jul-2026';
+        const to     = state.data.validTo    || '31-Dec-2027';
+        const type   = state.data.orderType  || 'Project Order';
+        return {
+          text: 'Please review the Internal Order details before I proceed:',
+          table: {
+            rows: [
+              ['Order Name',               desc],
+              ['Order Type',               type],
+              ['Company Code',             code],
+              ['Controlling Area',         'A100'],
+              ['Responsible Cost Center',  cc],
+              ['Order Manager',            mgr],
+              ['Budget',                   budget],
+              ['Valid From',               from],
+              ['Valid To',                 to],
+            ]
+          },
+          extraText: 'Would you like to continue?',
+          quickReplies: ['Yes, continue', 'Edit details'],
+        };
+      },
+      match: /assign|anna|michael|budget|500|300|form_submit/i,
+      before: (input) => {
+        if (/anna/i.test(input))   state.data.manager = 'Anna Mueller';
+        else if (/michael/i.test(input)) state.data.manager = 'Michael Weber';
+        const m = input.match(/(\d[\d,]*)/);
+        if (m) state.data.budget = 'EUR ' + parseInt(m[1].replace(/,/g,'')).toLocaleString();
+      },
+    },
+    // step 4 – validation
+    {
+      joule: () => ({
+        text: 'Running background validations…',
+        steps: [
+          { icon: '✅', text: 'Mandatory field validation — passed' },
+          { icon: '✅', text: 'Duplicate Internal Order check — no duplicates found' },
+          { icon: '✅', text: 'Naming convention compliance — passed' },
+          { icon: '✅', text: 'Cost Center validity (Global Innovation) — active and valid' },
+          { icon: '✅', text: 'Manager assignment (Anna Mueller) — valid and active' },
+          { icon: '✅', text: 'Budget threshold verification — within policy limits' },
+          { icon: '✅', text: 'Corporate controlling policies — compliant' },
+          { icon: '✅', text: 'Financial governance rules — compliant' },
+        ],
+        extraText: '<span class="chip success">✔ All validations passed successfully</span>',
+      }),
+      match: /yes|continue|proceed/i,
+    },
+    // step 5 – authorization
+    {
+      joule: () => ({
+        text: 'Authorization check complete.<br><br>✅ You are authorized to request Internal Order creation.<br><br>⚠️ <b>Approval required:</b> The budget of EUR 500,000 exceeds the EUR 250,000 auto-approval threshold. The following approval workflow has been triggered:',
+        workflow: [
+          { label: 'Requester (Suman Puthadi)', done: true },
+          { label: 'Cost Center Manager', done: false },
+          { label: 'Finance Governance Team', done: false },
+          { label: 'Master Data Team', done: false },
+        ],
+        extraText: 'Approval requests have been sent. <span class="chip pending">⏳ Awaiting Approval</span>',
+        quickReplies: ['Simulate Approval'],
+      }),
+      match: /.+/,
+    },
+    // step 6 – approval simulation
+    {
+      joule: () => ({
+        text: '✅ <b>All approvals received.</b><br><br>Approval chain completed:',
+        workflow: [
+          { label: 'Requester (Suman Puthadi)', done: true },
+          { label: 'Cost Center Manager — Approved', done: true },
+          { label: 'Finance Governance Team — Approved', done: true },
+          { label: 'Master Data Team — Approved', done: true },
+        ],
+        extraText: 'Ready to create the Internal Order.',
+      }),
+      match: /approv|simulate/i,
+    },
+    // step 7 – confirmation gate
+    {
+      joule: () => ({
+        text: 'As a governance safeguard, I require explicit confirmation before creating the Internal Order.',
+        confirmBox: {
+          items: [
+            ['Internal Order Name', 'AI Transformation Program'],
+            ['Budget', state.data.budget || 'EUR 500,000'],
+            ['Manager', state.data.manager || 'Anna Mueller'],
+            ['Valid From', '01-Jul-2026'],
+            ['Valid To', '31-Dec-2027'],
+          ],
+          instruction: 'Type <b>"Confirm Create"</b> to proceed.',
+        },
+        quickReplies: ['Confirm Create'],
+      }),
+      match: /.+/,
+    },
+    // step 8 – creation
+    {
+      joule: () => {
+        const ioId = 'IO-' + (780000 + Math.floor(Math.random()*9999));
+        state.pendingIO = ioId;
+        addAudit('CREATE', 'Internal Order', ioId);
+        return {
+          text: 'Creating Internal Order…',
+          steps: [
+            { icon: '✅', text: 'Internal Order created in S/4HANA' },
+            { icon: '✅', text: 'Cost Center assigned (Global Innovation)' },
+            { icon: '✅', text: 'Responsible Manager assigned (Anna Mueller)' },
+            { icon: '✅', text: 'Budget posted (EUR 500,000)' },
+            { icon: '✅', text: 'Validity dates applied (01-Jul-2026 → 31-Dec-2027)' },
+            { icon: '✅', text: 'Master Data Repository updated' },
+            { icon: '✅', text: 'Connected systems synchronized' },
+          ],
+          successCard: {
+            ioId,
+            description: 'AI Transformation Program',
+            budget: state.data.budget || 'EUR 500,000',
+            manager: state.data.manager || 'Anna Mueller',
+          },
+          extraText: '📧 Notifications sent to Requestor, Cost Center Manager, and Finance Governance Team.',
+        };
+      },
+      match: /confirm create/i,
+    },
+    // step 9 – done / monitor
+    {
+      joule: () => ({
+        text: `Master Data Agent- Internal Order will now proactively monitor <b>${state.pendingIO || 'the new Internal Order'}</b>:<br><br>• Budget consumption alerts (at 75% and 90%)<br>• Expiry notifications (30 days before)<br>• Missing activity alerts (after 90 days)<br>• Governance violation alerts<br><br>Is there anything else you'd like to do?`,
+        quickReplies: ['Change this IO', 'Query all active IOs', 'Close this IO'],
+      }),
+      match: /.+/,
+    },
+  ];
+}
+
+function changeScenario() {
+  return [
+    // step 0 – greeting
+    {
+      joule: () => ({
+        text: 'I can help you change an Internal Order.<br><br>You can update:<ul style="margin:8px 0 0 18px"><li>Budget Amount</li><li>Order Manager</li><li>Validity Dates</li><li>Cost Center</li><li>Order Description</li></ul><br>Please provide the Internal Order number and what you\'d like to change.',
+        quickReplies: ['Change IO-782145 budget to EUR 750,000', 'Change manager for IO-782145', 'Extend validity of IO-771032'],
+      }),
+      match: /.+/,
+    },
+    // step 1 – retrieve & impact analysis
+    {
+      joule: () => {
+        const isBudget = /budget|750|increase/i.test(state.data.changeInput || '');
+        const isMgr    = /manager|assign/i.test(state.data.changeInput || '');
+        if (isMgr) {
+          return {
+            text: 'Retrieving current values for <b>IO-782145</b>…<br><br>Current manager: <b>Anna Mueller</b><br><br>Please select the new manager:',
+            quickReplies: ['Assign Michael Weber', 'Assign John Smith'],
+          };
+        }
+        return {
+          text: 'Retrieving current values for <b>IO-782145</b>…<br><br>Impact analysis for budget change:',
+          table: {
+            rows: [
+              ['Field', 'Current Value', 'Proposed Value'],
+              ['Budget', 'EUR 500,000', 'EUR 750,000'],
+              ['Δ Budget', '', '+EUR 250,000 (+50%)'],
+              ['Approval Threshold', 'EUR 250,000', '—'],
+              ['Approval Required', '', 'Yes — Finance Governance'],
+            ],
+            header: true,
+          },
+          steps: [
+            { icon: '✅', text: 'No open commitments exceed new budget' },
+            { icon: '✅', text: 'Naming convention unchanged — no impact' },
+            { icon: '✅', text: 'Controlling area policy — compliant' },
+            { icon: '⚠️', text: 'Budget increase >50% requires additional approval' },
+          ],
+          extraText: 'Shall I trigger the approval workflow?',
+          quickReplies: ['Yes, trigger approval', 'Cancel'],
+        };
+      },
+      match: /.+/,
+      before: (input) => { state.data.changeInput = input; },
+    },
+    // step 2 – approval routing
+    {
+      joule: () => ({
+        text: 'Authorization check complete.<br><br>✅ You are authorized to request this change.<br><br>Approval workflow triggered:',
+        workflow: [
+          { label: 'Requester (Suman Puthadi)', done: true },
+          { label: 'Cost Center Manager', done: false },
+          { label: 'Finance Governance Team', done: false },
+        ],
+        extraText: 'Approval requests sent. <span class="chip pending">⏳ Awaiting Approval</span>',
+        quickReplies: ['Simulate Approval'],
+      }),
+      match: /yes|trigger|proceed/i,
+    },
+    // step 3 – approvals complete
+    {
+      joule: () => ({
+        text: '✅ All approvals received.',
+        workflow: [
+          { label: 'Requester (Suman Puthadi)', done: true },
+          { label: 'Cost Center Manager — Approved', done: true },
+          { label: 'Finance Governance Team — Approved', done: true },
+        ],
+        extraText: 'Ready to apply the change.',
+      }),
+      match: /approv|simulate/i,
+    },
+    // step 4 – confirmation gate
+    {
+      joule: () => ({
+        text: 'Governance safeguard: Please confirm the change before I update master data.',
+        confirmBox: {
+          items: [
+            ['Internal Order', 'IO-782145 — AI Transformation Program'],
+            ['Field Changed', 'Budget'],
+            ['Current Value', 'EUR 500,000'],
+            ['New Value', 'EUR 750,000'],
+            ['Approved By', 'Cost Center Manager, Finance Governance Team'],
+          ],
+          instruction: 'Type <b>"Confirm Change"</b> to proceed.',
+        },
+        quickReplies: ['Confirm Change'],
+      }),
+      match: /.+/,
+    },
+    // step 5 – execution
+    {
+      joule: () => {
+        addAudit('CHANGE', 'Internal Order', 'IO-782145');
+        return {
+          text: 'Applying changes to S/4HANA…',
+          steps: [
+            { icon: '✅', text: 'Budget updated: EUR 500,000 → EUR 750,000' },
+            { icon: '✅', text: 'Change document created in S/4HANA' },
+            { icon: '✅', text: 'Master Data Repository synchronized' },
+            { icon: '✅', text: 'Budget availability recalculated' },
+            { icon: '✅', text: 'Connected systems notified' },
+          ],
+          successCard: {
+            ioId: 'IO-782145',
+            description: 'AI Transformation Program',
+            budget: 'EUR 750,000',
+            manager: 'Anna Mueller',
+          },
+          extraText: '📧 Change notification sent to Requestor, Cost Center Manager, and Finance Governance Team.<br><br><span class="chip success">✔ Change completed successfully</span>',
+        };
+      },
+      match: /confirm change/i,
+    },
+    // step 6 – post-change monitoring
+    {
+      joule: () => ({
+        text: 'Master Data Agent- Internal Order will continue monitoring <b>IO-782145</b> with updated thresholds:<br><br>• Budget alert threshold updated to 75% of EUR 750,000 (EUR 562,500)<br>• All other monitoring rules remain active<br><br>Is there anything else you\'d like to change?',
+        quickReplies: ['Extend validity dates', 'Change manager', 'Query this IO'],
+      }),
+      match: /.+/,
+    },
+  ];
+}
+
+function closeScenario() {
+  return [
+    // step 0 – greeting
+    {
+      joule: () => ({
+        text: 'I can help close an Internal Order.<br><br>Before closing, I will automatically check:<ul style="margin:8px 0 0 18px"><li>Open purchase orders and commitments</li><li>Actual postings and settlement status</li><li>Remaining budget to be released</li><li>Stakeholder notifications required</li></ul><br>Please provide the Internal Order number you\'d like to close.',
+        quickReplies: ['Close IO-782145', 'Close IO-755021'],
+      }),
+      match: /.+/,
+    },
+    // step 1 – pre-close checks
+    {
+      joule: () => ({
+        text: 'Running pre-close checks for <b>IO-782145 — AI Transformation Program</b>…',
+        steps: [
+          { icon: '✅', text: 'Open purchase orders — none found' },
+          { icon: '✅', text: 'Open commitments — none found' },
+          { icon: '✅', text: 'Open reservations — none found' },
+          { icon: '✅', text: 'Settlement status — fully settled' },
+          { icon: '✅', text: 'All actual costs posted and cleared' },
+          { icon: '⚠️', text: 'Remaining budget: EUR 45,000 — will be released to Cost Center' },
+          { icon: '✅', text: 'Governance sign-off — not required (budget < EUR 100,000 released)' },
+        ],
+        extraText: 'All pre-close checks passed. <span class="chip success">✔ Order is eligible for closure</span><br><br>Shall I proceed to the approval step?',
+        quickReplies: ['Yes, proceed to approval', 'Cancel'],
+      }),
+      match: /close|782145|755021/i,
+    },
+    // step 2 – authorization
+    {
+      joule: () => ({
+        text: 'Authorization check complete.<br><br>✅ You are authorized to request closure of this Internal Order.<br><br>Approval required from Cost Center Manager (budget release notification):',
+        workflow: [
+          { label: 'Requester (Suman Puthadi)', done: true },
+          { label: 'Cost Center Manager', done: false },
+          { label: 'Master Data Team', done: false },
+        ],
+        extraText: 'Approval requests sent. <span class="chip pending">⏳ Awaiting Approval</span>',
+        quickReplies: ['Simulate Approval'],
+      }),
+      match: /yes|proceed/i,
+    },
+    // step 3 – approvals received
+    {
+      joule: () => ({
+        text: '✅ All approvals received.',
+        workflow: [
+          { label: 'Requester (Suman Puthadi)', done: true },
+          { label: 'Cost Center Manager — Approved', done: true },
+          { label: 'Master Data Team — Approved', done: true },
+        ],
+        extraText: 'Ready to close the Internal Order.',
+      }),
+      match: /approv|simulate/i,
+    },
+    // step 4 – confirmation gate
+    {
+      joule: () => ({
+        text: 'Governance safeguard: This action is irreversible. Please confirm closure.',
+        confirmBox: {
+          items: [
+            ['Internal Order', 'IO-782145 — AI Transformation Program'],
+            ['Current Status', 'Active'],
+            ['New Status', 'Closed'],
+            ['Remaining Budget', 'EUR 45,000 — will be released'],
+            ['Manager Notified', 'Anna Mueller'],
+          ],
+          instruction: 'Type <b>"Confirm Close"</b> to proceed.',
+        },
+        quickReplies: ['Confirm Close'],
+      }),
+      match: /.+/,
+    },
+    // step 5 – execution
+    {
+      joule: () => {
+        addAudit('CLOSE', 'Internal Order', 'IO-782145');
+        return {
+          text: 'Closing Internal Order…',
+          steps: [
+            { icon: '✅', text: 'Internal Order status set to Closed in S/4HANA' },
+            { icon: '✅', text: 'Remaining budget EUR 45,000 released to Cost Center' },
+            { icon: '✅', text: 'Order locked against further postings' },
+            { icon: '✅', text: 'Master Data Repository updated' },
+            { icon: '✅', text: 'Change document created for audit trail' },
+            { icon: '✅', text: 'Connected systems synchronized' },
+          ],
+          extraText: `<div style="border:1px solid #4caf50;border-radius:8px;padding:14px;background:#e6f4ea;margin:10px 0">
+            <div style="font-size:20px;font-weight:700;color:#1a7a3b">✅ IO-782145 Closed</div>
+            <table class="data-table" style="margin-top:8px;">
+              <tr><td><b>Description</b></td><td>AI Transformation Program</td></tr>
+              <tr><td><b>Closed By</b></td><td>Suman Puthadi (via Master Data Agent- Internal Order)</td></tr>
+              <tr><td><b>Status</b></td><td><span class="chip" style="background:#f0f0f0;color:#6a6d70">Closed</span></td></tr>
+              <tr><td><b>Budget Released</b></td><td>EUR 45,000</td></tr>
+            </table>
+          </div>
+          📧 Notifications sent to Requestor, Cost Center Manager, and Finance Governance Team.`,
+        };
+      },
+      match: /confirm close/i,
+    },
+    // step 6 – post-close
+    {
+      joule: () => ({
+        text: 'IO-782145 has been permanently closed and is now visible in the closed orders archive.<br><br>Master Data Agent- Internal Order monitoring has been deactivated for this order.<br><br>Is there anything else you\'d like to do?',
+        quickReplies: ['Create a new Internal Order', 'Query closed IOs', 'Advise on other IOs to close'],
+      }),
+      match: /.+/,
+    },
+  ];
+}
+
+function queryScenario() {
+  return [
+    // step 0 – greeting
+    {
+      joule: () => ({
+        text: 'I can query Internal Orders across your organization.<br><br>You can search by:<ul style="margin:8px 0 0 18px"><li>Cost Center</li><li>Order Manager</li><li>Order Type or Status</li><li>Budget utilization range</li><li>Expiry date range</li></ul><br>What would you like to search for?',
+        quickReplies: ['Show all active IOs for Cost Center Global Innovation', 'Show IOs managed by Anna Mueller', 'Show IOs expiring this quarter'],
+      }),
+      match: /.+/,
+    },
+    // step 1 – results
+    {
+      joule: () => ({
+        text: 'Querying S/4HANA… Here are the active Internal Orders for <b>Cost Center: Global Innovation</b>:',
+        table: {
+          rows: [
+            ['IO Number', 'Description', 'Budget', 'Consumed', 'Manager', 'Expiry', 'Status'],
+            ['IO-782145', 'AI Transformation Program', 'EUR 500K', '65%', 'Anna Mueller', '31-Dec-2027', '🟢 Active'],
+            ['IO-771032', 'Digital Twin Initiative', 'EUR 300K', '42%', 'Michael Weber', '30-Jun-2027', '🟢 Active'],
+            ['IO-765881', 'Cloud Migration Phase 2', 'EUR 1.2M', '89%', 'John Smith', '31-Mar-2027', '🔴 Budget Risk'],
+            ['IO-759044', 'Sustainability Analytics', 'EUR 180K', '31%', 'Anna Mueller', '31-Dec-2026', '🟢 Active'],
+            ['IO-748832', 'Innovation Lab Ops', 'EUR 75K', '97%', 'Michael Weber', '15-Jun-2026', '🔴 Critical'],
+          ],
+          header: true,
+        },
+        extraText: '5 Internal Orders found.<br>⚠️ <b>2 orders require attention:</b> IO-765881 (budget risk) and IO-748832 (critical — expires in 13 days).<br><br>Would you like to drill into a specific order?',
+        quickReplies: ['Show details for IO-765881', 'Show details for IO-748832', 'Export all to Excel'],
+      }),
+      match: /.+/,
+    },
+    // step 2 – drill-down
+    {
+      joule: () => {
+        const is748 = /748832/i.test(state.data.queryInput || '');
+        if (is748) {
+          return {
+            text: '<b>IO-748832 — Innovation Lab Ops</b>',
+            table: {
+              rows: [
+                ['Field', 'Value'],
+                ['Company Code', 'DE01'],
+                ['Controlling Area', 'A100'],
+                ['Cost Center', 'Global Innovation'],
+                ['Manager', 'Michael Weber'],
+                ['Budget', 'EUR 75,000'],
+                ['Actual Postings', 'EUR 72,750 (97%)'],
+                ['Remaining', 'EUR 2,250'],
+                ['Valid From', '01-Jan-2026'],
+                ['Valid To', '15-Jun-2026'],
+                ['Days to Expiry', '13 days'],
+                ['Status', '🔴 Critical'],
+              ],
+              header: true,
+            },
+            extraText: '🚨 This order will expire in 13 days with 97% budget consumed and active postings.<br><br><b>Recommended actions:</b><br>• Close the order if activity is complete<br>• Extend validity if postings will continue<br>• Reassign remaining EUR 2,250 if needed',
+            quickReplies: ['Close IO-748832', 'Extend validity by 3 months', 'Notify Michael Weber'],
+          };
+        }
+        return {
+          text: '<b>IO-765881 — Cloud Migration Phase 2</b>',
+          table: {
+            rows: [
+              ['Field', 'Value'],
+              ['Company Code', 'DE01'],
+              ['Controlling Area', 'A100'],
+              ['Cost Center', 'Global Innovation'],
+              ['Manager', 'John Smith'],
+              ['Budget', 'EUR 1,200,000'],
+              ['Actual Postings', 'EUR 1,068,000 (89%)'],
+              ['Remaining Budget', 'EUR 132,000'],
+              ['Current Burn Rate', 'EUR 48,000 / month'],
+              ['Projected Depletion', '~47 days'],
+              ['Valid To', '31-Mar-2027'],
+              ['Status', '🔴 Budget Risk'],
+            ],
+            header: true,
+          },
+          extraText: '⚠️ At the current burn rate of EUR 48,000/month, budget will be fully consumed by mid-July 2026 — well before the order expiry in March 2027.<br><br><b>Recommended actions:</b><br>• Request a budget extension of EUR 300,000<br>• Reduce scope to stay within current budget<br>• Reassign some activities to another IO',
+          quickReplies: ['Request budget extension for IO-765881', 'Notify John Smith', 'Create new IO for overflow'],
+        };
+      },
+      match: /.+/,
+      before: (input) => { state.data.queryInput = input; },
+    },
+    // step 3 – action from query
+    {
+      joule: () => ({
+        text: '✅ Notification sent to John Smith (john.smith@company.com) regarding the budget risk on IO-765881.<br><br>Message sent:<br><em>"IO-765881 Cloud Migration Phase 2 has consumed 89% of its budget. At the current burn rate, funds will be exhausted in approximately 47 days. Please review and take appropriate action."</em><br><br>Would you like to initiate a budget extension request?',
+        quickReplies: ['Yes, start budget extension', 'No, just monitor', 'Query another IO'],
+      }),
+      match: /notify|john|extension|request/i,
+    },
+  ];
+}
+
+function adviseScenario() {
+  return [
+    // step 0 – greeting
+    {
+      joule: () => ({
+        text: 'I can analyze your Internal Orders portfolio and provide intelligent recommendations.<br><br>I can advise on:<ul style="margin:8px 0 0 18px"><li>Orders to close this quarter</li><li>Budget risks and overrun projections</li><li>Governance violations</li><li>Portfolio optimization</li><li>Manager workload distribution</li></ul><br>What analysis would you like?',
+        quickReplies: ['Which IOs should be closed this quarter?', 'Where are the budget risks?', 'Show portfolio overview'],
+      }),
+      match: /.+/,
+    },
+    // step 1 – portfolio analysis
+    {
+      joule: () => ({
+        text: 'Analyzing your Internal Orders portfolio… Running 5 analysis dimensions:',
+        steps: [
+          { icon: '✅', text: 'Posting activity analysis — complete (45 orders scanned)' },
+          { icon: '✅', text: 'Budget utilization modeling — complete' },
+          { icon: '✅', text: 'Expiry date risk assessment — complete' },
+          { icon: '✅', text: 'Governance compliance check — complete' },
+          { icon: '✅', text: 'Manager assignment validity — complete' },
+        ],
+        extraText: 'Analysis complete. Here are my recommendations:',
+      }),
+      match: /.+/,
+    },
+    // step 2 – recommendations
+    {
+      joule: () => ({
+        text: 'Portfolio recommendations for Q3 2026:',
+        table: {
+          rows: [
+            ['IO Number', 'Description', 'Recommendation', 'Priority', 'Reason'],
+            ['IO-755021', 'Legacy ERP Cleanup', '🔒 Close', '🔴 High', 'No postings 180d; expires Jul-26'],
+            ['IO-742300', 'Pilot BI Project', '🔒 Close', '🔴 High', 'Fully settled; EUR 0 remaining'],
+            ['IO-748832', 'Innovation Lab Ops', '🔒 Close or Extend', '🔴 Critical', 'Expires in 13 days; 97% consumed'],
+            ['IO-765881', 'Cloud Migration Ph.2', '⚠️ Budget Review', '🟠 Medium', '89% consumed; 47d to depletion'],
+            ['IO-759044', 'Sustainability Analytics', '📋 Review Manager', '🟡 Low', 'Manager on leave — reassign'],
+            ['IO-771032', 'Digital Twin Initiative', '✅ On Track', '🟢 None', 'Normal utilization and activity'],
+            ['IO-782145', 'AI Transformation', '✅ On Track', '🟢 None', 'Normal utilization and activity'],
+          ],
+          header: true,
+        },
+        extraText: '<b>Summary:</b> 3 orders for immediate action, 1 budget review, 1 governance item.<br><br>Estimated budget release from closures: <b>EUR 52,250</b><br><br>Would you like me to initiate any of these actions?',
+        quickReplies: ['Close IO-755021 and IO-742300', 'Request budget review for IO-765881', 'Reassign IO-759044 manager', 'Take all recommended actions'],
+      }),
+      match: /.+/,
+    },
+    // step 3 – bulk action
+    {
+      joule: () => {
+        const isAll  = /all|bulk/i.test(state.data.adviseInput || '');
+        const isBudg = /budget|765881/i.test(state.data.adviseInput || '');
+        if (isAll) {
+          return {
+            text: 'Initiating all recommended actions. Running pre-checks for each order…',
+            steps: [
+              { icon: '✅', text: 'IO-755021: pre-close checks passed — queued for approval' },
+              { icon: '✅', text: 'IO-742300: pre-close checks passed — queued for approval' },
+              { icon: '✅', text: 'IO-748832: pre-close checks passed — queued for approval' },
+              { icon: '⚠️', text: 'IO-765881: budget review request created — sent to Finance Governance' },
+              { icon: '✅', text: 'IO-759044: manager reassignment workflow triggered' },
+            ],
+            extraText: 'All actions initiated. Approval workflows sent to relevant approvers.<br><br>Expected completion: <b>2–3 business days</b><br><br><span class="chip success">✔ 5 actions queued successfully</span>',
+            quickReplies: ['View approval status', 'View audit trail'],
+          };
+        }
+        if (isBudg) {
+          return {
+            text: 'Budget review request created for <b>IO-765881 — Cloud Migration Phase 2</b>:<br><br>Review details sent to Finance Governance Team with:<br>• Current utilization: 89% (EUR 1,068,000 / EUR 1,200,000)<br>• Projected depletion: 47 days<br>• Recommended extension: EUR 300,000<br>• Burn rate analysis attached<br><br>Awaiting Finance Governance response.',
+            quickReplies: ['Also close IO-755021', 'View all pending approvals'],
+          };
+        }
+        addAudit('CLOSE', 'Internal Order', 'IO-755021');
+        addAudit('CLOSE', 'Internal Order', 'IO-742300');
+        return {
+          text: 'Initiating closure for <b>IO-755021</b> and <b>IO-742300</b>…',
+          steps: [
+            { icon: '✅', text: 'IO-755021: pre-close checks passed' },
+            { icon: '✅', text: 'IO-742300: pre-close checks passed' },
+            { icon: '✅', text: 'Approval requests sent to Cost Center Manager' },
+            { icon: '✅', text: 'Audit entries created for both orders' },
+          ],
+          extraText: 'Both closure workflows are in progress.<br><br>Estimated budget released when approved: <b>EUR 7,250</b><br><br>You will be notified when approvals are complete.',
+          quickReplies: ['Also request budget review for IO-765881', 'View audit trail', 'Query all pending closures'],
+        };
+      },
+      match: /.+/,
+      before: (input) => { state.data.adviseInput = input; },
+    },
+    // step 4 – wrap up
+    {
+      joule: () => ({
+        text: 'Portfolio optimization actions are all in progress. Here\'s a summary of what was initiated:',
+        table: {
+          rows: [
+            ['Action', 'Orders', 'Status'],
+            ['Close', 'IO-755021, IO-742300', '⏳ Pending Approval'],
+            ['Budget Review', 'IO-765881', '⏳ Sent to Finance'],
+            ['Manager Reassign', 'IO-759044', '⏳ Pending'],
+          ],
+          header: true,
+        },
+        extraText: 'Master Data Agent- Internal Order will notify you as each action is approved and completed.<br><br>Is there anything else you\'d like me to analyze or act on?',
+        quickReplies: ['Create a new IO', 'Query remaining active IOs', 'Show governance alerts'],
+      }),
+      match: /.+/,
+    },
+  ];
+}
+
+// ── Audit log ────────────────────────────────────────────────────────────────
+function addAudit(action, object, id) {
+  const now = new Date();
+  const ts = now.toLocaleTimeString();
+  state.auditLog.unshift({ action, object, id, ts, user: 'Suman Puthadi', source: 'Master Data Agent- Internal Order' });
+  renderAudit();
+}
+
+function renderAudit() {
+  const el = document.getElementById('auditLog');
+  if (!state.auditLog.length) {
+    el.innerHTML = '<div class="audit-entry" style="color:#aaa;font-size:11px;">No actions yet.</div>';
+    return;
+  }
+  el.innerHTML = state.auditLog.slice(0, 4).map(e =>
+    `<div class="audit-entry">
+      <span class="audit-action">${e.action}</span> ${e.object}<br>
+      <span>${e.id}</span> &nbsp;·&nbsp; <span>${e.ts}</span><br>
+      <span>By: ${e.user}</span>
+    </div>`
+  ).join('');
+}
+
+// ── Render helpers ───────────────────────────────────────────────────────────
+function buildBubble(data) {
+  let html = '';
+
+  if (data.text) {
+    html += `<p>${data.text}</p>`;
+  }
+
+  if (data.table) {
+    html += '<table class="data-table">';
+    data.table.rows.forEach((row, i) => {
+      if (i === 0 && data.table.header) {
+        html += '<tr>' + row.map(c => `<th>${c}</th>`).join('') + '</tr>';
+      } else {
+        html += '<tr>' + row.map(c => `<td>${c}</td>`).join('') + '</tr>';
+      }
+    });
+    html += '</table>';
+  }
+
+  if (data.manualForm) {
+    html += `<div class="io-form">
+      <div class="form-row form-row-full"><label class="form-label">Order Description *</label><input class="form-input" id="mf_desc" placeholder="e.g. AI Transformation Program" /></div>
+      <div class="form-row"><label class="form-label">Company Code *</label><input class="form-input" id="mf_code" placeholder="e.g. DE01" /></div>
+      <div class="form-row"><label class="form-label">Responsible Cost Center *</label><input class="form-input" id="mf_cc" placeholder="e.g. Global Innovation" /></div>
+      <div class="form-row"><label class="form-label">Order Manager *</label><input class="form-input" id="mf_mgr" placeholder="e.g. Anna Mueller" /></div>
+      <div class="form-row"><label class="form-label">Budget Amount (EUR) *</label><input class="form-input" id="mf_budget" type="number" placeholder="e.g. 500000" /></div>
+      <div class="form-row"><label class="form-label">Valid From *</label><input class="form-input" id="mf_from" type="date" /></div>
+      <div class="form-row"><label class="form-label">Valid To *</label><input class="form-input" id="mf_to" type="date" /></div>
+      <div class="form-row"><label class="form-label">Order Type</label>
+        <select class="form-select" id="mf_type">
+          <option value="Project Order">Project Order</option>
+          <option value="Investment Order">Investment Order</option>
+          <option value="Expense Order">Expense Order</option>
+          <option value="Overhead Order">Overhead Order</option>
+        </select>
+      </div>
+      <button class="form-submit" onclick="submitManualForm()">Submit Details ➤</button>
+    </div>`;
+  }
+
+  if (data.steps) {
+    html += '<div class="steps">';
+    data.steps.forEach(s => {
+      html += `<div class="step done"><span class="step-icon">${s.icon}</span><span class="step-text">${s.text}</span></div>`;
+    });
+    html += '</div>';
+  }
+
+  if (data.workflow) {
+    html += '<div class="workflow">';
+    data.workflow.forEach((node, i) => {
+      html += `<div class="wf-node ${node.done ? 'wf-done' : ''}"><div class="wf-dot ${node.done ? 'done' : 'pending'}"></div><span>${node.label}</span></div>`;
+      if (i < data.workflow.length - 1) html += '<div class="wf-arrow">↓</div>';
+    });
+    html += '</div>';
+  }
+
+  if (data.confirmBox) {
+    html += '<div class="confirm-box">';
+    data.confirmBox.items.forEach(([k,v]) => {
+      html += `<p><b>${k}:</b> ${v}</p>`;
+    });
+    html += `<div class="confirm-label" style="margin-top:10px;">👉 ${data.confirmBox.instruction}</div>`;
+    html += '</div>';
+  }
+
+  if (data.successCard) {
+    const c = data.successCard;
+    html += `<div class="success-card">
+      <div class="io-id">✅ ${c.ioId}</div>
+      <table class="data-table" style="margin-top:8px;">
+        <tr><td><b>Description</b></td><td>${c.description}</td></tr>
+        <tr><td><b>Budget</b></td><td>${c.budget}</td></tr>
+        <tr><td><b>Manager</b></td><td>${c.manager}</td></tr>
+        <tr><td><b>Status</b></td><td><span class="chip active">Active</span></td></tr>
+      </table>
+    </div>`;
+  }
+
+  if (data.extraText) {
+    html += `<p style="margin-top:10px;">${data.extraText}</p>`;
+  }
+
+  if (data.quickReplies && data.quickReplies.length) {
+    html += '<div class="quick-replies">';
+    data.quickReplies.forEach(qr => {
+      html += `<button class="qr-btn" onclick="handleQuickReply(this)">${qr}</button>`;
+    });
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function submitManualForm() {
+  const desc   = (document.getElementById('mf_desc')   || {}).value || '';
+  const code   = (document.getElementById('mf_code')   || {}).value || '';
+  const cc     = (document.getElementById('mf_cc')     || {}).value || '';
+  const mgr    = (document.getElementById('mf_mgr')    || {}).value || '';
+  const budget = (document.getElementById('mf_budget') || {}).value || '';
+  const from   = (document.getElementById('mf_from')   || {}).value || '';
+  const to     = (document.getElementById('mf_to')     || {}).value || '';
+  const type   = (document.getElementById('mf_type')   || {}).value || 'Project Order';
+
+  if (!desc || !code || !cc || !mgr || !budget) {
+    alert('Please fill in all required fields (marked with *).');
+    return;
+  }
+
+  // Store entered values
+  state.data.desc        = desc;
+  state.data.companyCode = code;
+  state.data.costCenter  = cc;
+  state.data.manager     = mgr;
+  state.data.budget      = 'EUR ' + parseInt(budget).toLocaleString();
+  state.data.validFrom   = from || '01-Jul-2026';
+  state.data.validTo     = to   || '31-Dec-2027';
+  state.data.orderType   = type;
+
+  // Disable form
+  document.querySelectorAll('.form-input, .form-select, .form-submit').forEach(el => el.disabled = true);
+
+  // Show as user message and advance
+  const summary = `${desc} | ${code} | ${cc} | ${mgr} | EUR ${parseInt(budget).toLocaleString()} | ${from} → ${to}`;
+  processInput('form_submit ' + summary);
+}
+
+function appendMessage(role, html, isRaw = false) {
+  const container = document.getElementById('messages');
+  const wrapper = document.createElement('div');
+  wrapper.className = `msg ${role}`;
+
+  const av = document.createElement('div');
+  av.className = `avatar ${role}`;
+  av.textContent = role === 'joule' ? 'AI' : 'SP';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (isRaw) bubble.innerHTML = html;
+  else bubble.textContent = html;
+
+  wrapper.appendChild(av);
+  wrapper.appendChild(bubble);
+  container.appendChild(wrapper);
+  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 0);
+  return bubble;
+}
+
+function showTyping() {
+  const container = document.getElementById('messages');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg joule';
+  wrapper.id = 'typingIndicator';
+
+  const av = document.createElement('div');
+  av.className = 'avatar joule';
+  av.textContent = 'AI';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+
+  wrapper.appendChild(av);
+  wrapper.appendChild(bubble);
+  container.appendChild(wrapper);
+  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 0);
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+// ── Scenario loader ──────────────────────────────────────────────────────────
+function loadScenario(name) {
+  state.scenario = name;
+  state.step = 0;
+  state.data = {};
+  state.pendingIO = null;
+
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  const btns = document.querySelectorAll('.scenario-btn');
+  const map = ['create','change','close','query','advise'];
+  const idx = map.indexOf(name);
+  if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
+
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('alertBanner').className = 'alert-banner hidden';
+
+  setInputEnabled(true);
+
+  const scenarioSteps = scenarios[name];
+  const firstStep = scenarioSteps[0];
+  const jouleData = firstStep.joule();
+
+  setTimeout(() => {
+    appendMessage('joule', buildBubble(jouleData), true);
+  }, 300);
+}
+
+// ── Message flow ──────────────────────────────────────────────────────────────
+function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  processInput(text);
+}
+
+function handleQuickReply(btn) {
+  const text = btn.textContent;
+  // disable all quick reply buttons in that bubble
+  const bubble = btn.closest('.bubble');
+  if (bubble) bubble.querySelectorAll('.qr-btn').forEach(b => b.disabled = true);
+  processInput(text);
+}
+
+function processInput(text) {
+  appendMessage('user', text);
+
+  const scenarioSteps = scenarios[state.scenario];
+  const currentStepIndex = state.step;
+  const currentStep = scenarioSteps[currentStepIndex];
+
+  setInputEnabled(false);
+  showTyping();
+
+  setTimeout(() => {
+    removeTyping();
+
+    // run before-hook if defined
+    if (currentStep && currentStep.before) currentStep.before(text);
+
+    // advance step
+    const nextStepIndex = currentStepIndex + 1;
+    if (nextStepIndex >= scenarioSteps.length) {
+      // end of scenario
+      appendMessage('joule', buildBubble({
+        text: 'Is there anything else I can help you with? You can select another scenario from the menu above.',
+        quickReplies: ['Create a new Internal Order', 'Query Internal Orders', 'Start over'],
+      }), true);
+      setInputEnabled(true);
+      return;
+    }
+
+    state.step = nextStepIndex;
+    const nextStep = scenarioSteps[nextStepIndex];
+    const jouleData = nextStep.joule();
+    appendMessage('joule', buildBubble(jouleData), true);
+    setInputEnabled(true);
+  }, 800 + Math.random() * 600);
+}
+
+function setInputEnabled(enabled) {
+  document.getElementById('userInput').disabled = !enabled;
+  document.getElementById('sendBtn').disabled = !enabled;
+}
+
+// ── Alerts ───────────────────────────────────────────────────────────────────
+const alertConfig = {
+  budget: {
+    bannerClass: 'alert-banner warning',
+    bannerHtml: '⚠️ <b>Budget Alert:</b> IO-765881 has consumed 89% of budget. IO-782145 has consumed 85% of budget.',
+    bubble: {
+      text: '⚠️ <b>Proactive Budget Alert — 2 orders require attention</b>',
+      table: {
+        rows: [
+          ['IO Number', 'Description', 'Budget', 'Consumed', 'Remaining', 'Risk'],
+          ['IO-765881', 'Cloud Migration Phase 2', 'EUR 1.2M', '89%', 'EUR 132K', '🔴 Critical'],
+          ['IO-782145', 'AI Transformation Program', 'EUR 500K', '85%', 'EUR 75K', '🟠 High'],
+        ],
+        header: true,
+      },
+      extraText: 'At current burn rates:<br>• IO-765881 will be depleted in <b>47 days</b><br>• IO-782145 will be depleted in <b>62 days</b><br><br>Would you like to review or request budget extensions?',
+      quickReplies: ['Request extension for IO-765881', 'Request extension for IO-782145', 'Notify managers', 'Dismiss'],
+    },
+  },
+  expiry: {
+    bannerClass: 'alert-banner info',
+    bannerHtml: '📅 <b>Expiry Alert:</b> 3 Internal Orders will expire within the next 30 days.',
+    bubble: {
+      text: '📅 <b>Proactive Expiry Alert — 3 orders expiring soon</b>',
+      table: {
+        rows: [
+          ['IO Number', 'Description', 'Manager', 'Expiry Date', 'Days Left', 'Budget Used'],
+          ['IO-748832', 'Innovation Lab Ops', 'Michael Weber', '15-Jun-2026', '13 days', '97%'],
+          ['IO-755021', 'Legacy ERP Cleanup', 'John Smith', '30-Jun-2026', '28 days', '12%'],
+          ['IO-738001', 'Procurement Automation', 'Anna Mueller', '05-Jul-2026', '33 days', '78%'],
+        ],
+        header: true,
+      },
+      extraText: 'Recommended actions:<br>• IO-748832: Close (nearly fully consumed)<br>• IO-755021: Close (low activity, low utilization)<br>• IO-738001: Extend validity by 6 months<br><br>Would you like me to take action?',
+      quickReplies: ['Close IO-748832 and IO-755021', 'Extend IO-738001', 'Notify all managers'],
+    },
+  },
+  activity: {
+    bannerClass: 'alert-banner warning',
+    bannerHtml: '🔔 <b>Activity Alert:</b> IO-755021 has had no postings for 90 days.',
+    bubble: {
+      text: '🔔 <b>Missing Activity Alert</b><br><br><b>IO-755021 — Legacy ERP Cleanup</b><br><br>No financial postings have been recorded for <b>180 days</b>.<br><br>This may indicate:<ul style="margin:8px 0 0 18px"><li>The project is complete and can be closed</li><li>The order has been abandoned</li><li>Postings are being made to the wrong cost object</li></ul>',
+      extraText: 'Manager: John Smith<br>Last posting: 04-Dec-2025<br>Budget remaining: EUR 7,250 (unspent)<br><br>Would you like to investigate or close this order?',
+      quickReplies: ['Close IO-755021', 'Notify John Smith', 'Ignore for now'],
+    },
+  },
+  governance: {
+    bannerClass: 'alert-banner warning',
+    bannerHtml: '🛡️ <b>Governance Alert:</b> IO-759044 has an invalid manager assignment.',
+    bubble: {
+      text: '🛡️ <b>Governance Alert — Invalid Manager Assignment</b><br><br><b>IO-759044 — Sustainability Analytics</b><br><br>The responsible manager <b>Sarah Hoffmann</b> is no longer valid:<ul style="margin:8px 0 0 18px"><li>Employee record shows: on extended leave since 01-May-2026</li><li>No substitute has been designated</li><li>This violates Corporate Controlling Policy CP-007</li></ul>',
+      extraText: 'Impact: Approval workflows for this order are blocked until a valid manager is assigned.<br><br>Suggested replacement: <b>Anna Mueller</b> (same Cost Center, available capacity)<br><br>Would you like to reassign?',
+      quickReplies: ['Assign Anna Mueller as manager', 'Assign a different manager', 'Escalate to Finance Governance'],
+    },
+  },
+};
+
+function triggerAlert(type) {
+  const cfg = alertConfig[type];
+  if (!cfg) return;
+  const banner = document.getElementById('alertBanner');
+  banner.className = cfg.bannerClass;
+  banner.innerHTML = cfg.bannerHtml;
+  appendMessage('joule', buildBubble(cfg.bubble), true);
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function resetChat() {
+  loadScenario(state.scenario);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+scenarios.create = createScenario();
+scenarios.change = changeScenario();
+scenarios.close  = closeScenario();
+scenarios.query  = queryScenario();
+scenarios.advise = adviseScenario();
+loadScenario('create');
+</script>
+</body>
+</html>
