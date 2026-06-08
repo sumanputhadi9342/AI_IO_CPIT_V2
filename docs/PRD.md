@@ -159,10 +159,4 @@ Internal Orders (IOs) in SAP are critical financial control objects used to trac
 
 ---
 
-## 9. Release Plan
 
-| Phase | Scope | Target |
-|---|---|---|
-| **v1.0 — MVP** | Create, Change, Close, Query, Advise, Alerts | Q3 2026 |
-| **v1.1** | Export to Excel, email notifications, mobile optimization | Q4 2026 |
-| **v2.0** | Settlement automation, cross-company-code analytics, AI budget forecasting | Q1 2027 |
