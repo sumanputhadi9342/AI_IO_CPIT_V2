@@ -672,22 +672,35 @@ function createScenario() {
           { icon: '✅', text: 'Financial governance rules — compliant' },
         ],
         extraText: '<span class="chip success">✔ All validations passed successfully</span>',
+        quickReplies: ['Proceed to Create', 'Cancel'],
       }),
       match: /yes|continue|proceed/i,
     },
+    // step 4b – cancel handler (injected inline via before hook)
+
     // step 5 – authorization
     {
-      joule: () => ({
-        text: 'Authorization check complete.<br><br>✅ You are authorized to request Internal Order creation.<br><br>⚠️ <b>Approval required:</b> The budget of EUR 500,000 exceeds the EUR 250,000 auto-approval threshold. The following approval workflow has been triggered:',
-        workflow: [
-          { label: 'Requester (Suman Puthadi)', done: true },
-          { label: 'Cost Center Manager', done: false },
-          { label: 'Finance Governance Team', done: false },
-          { label: 'Master Data Team', done: false },
-        ],
-        extraText: 'Approval requests have been sent. <span class="chip pending">⏳ Awaiting Approval</span>',
-        quickReplies: ['Simulate Approval'],
-      }),
+      joule: () => {
+        if (/cancel/i.test(state.data.postValidationChoice || '')) {
+          return {
+            text: '❌ Internal Order creation has been cancelled.',
+            extraText: 'No changes were made in S/4HANA. You can start a new request at any time.',
+            quickReplies: ['Start over', 'Query Internal Orders'],
+          };
+        }
+        return {
+          text: 'Authorization check complete.<br><br>✅ You are authorized to request Internal Order creation.<br><br>⚠️ <b>Approval required:</b> The budget of EUR 500,000 exceeds the EUR 250,000 auto-approval threshold. The following approval workflow has been triggered:',
+          workflow: [
+            { label: 'Requester (Suman Puthadi)', done: true },
+            { label: 'Cost Center Manager', done: false },
+            { label: 'Finance Governance Team', done: false },
+            { label: 'Master Data Team', done: false },
+          ],
+          extraText: 'Approval requests have been sent. <span class="chip pending">⏳ Awaiting Approval</span>',
+          quickReplies: ['Simulate Approval'],
+        };
+      },
+      before: (input) => { state.data.postValidationChoice = input; },
       match: /.+/,
     },
     // step 6 – approval simulation
