@@ -492,6 +492,9 @@
     <div class="sidebar-item" onclick="loadScenario('change')">
       <span class="sidebar-item-icon">✏️</span> Change IO
     </div>
+    <div class="sidebar-item" onclick="loadScenario('masschange')">
+      <span class="sidebar-item-icon">✏️✏️</span> Mass Change
+    </div>
     <div class="sidebar-item" onclick="loadScenario('close')">
       <span class="sidebar-item-icon">🔒</span> Close IO
     </div>
@@ -537,6 +540,7 @@
       <span class="toolbar-label">Quick actions:</span>
       <button class="scenario-btn active" onclick="loadScenario('create')">➕ Create IO</button>
       <button class="scenario-btn" onclick="loadScenario('change')">✏️ Change IO</button>
+      <button class="scenario-btn" onclick="loadScenario('masschange')">✏️✏️ Mass Change</button>
       <button class="scenario-btn" onclick="loadScenario('close')">🔒 Close IO</button>
       <button class="scenario-btn" onclick="loadScenario('query')">🔍 Query IO</button>
       <button class="scenario-btn" onclick="loadScenario('advise')">💡 Advise Me</button>
@@ -1216,6 +1220,214 @@ function adviseScenario() {
   ];
 }
 
+// ── Mass Change scenario ─────────────────────────────────────────────────────
+function massChangeScenario() {
+  return [
+    // step 0 – greeting
+    {
+      joule: () => ({
+        text: 'I can apply a single change to multiple Internal Orders at once — saving you time and ensuring consistency.<br><br>Supported mass changes:<ul style="margin:8px 0 0 18px"><li>Budget Amount</li><li>Order Manager</li><li>Validity Dates (Valid From / Valid To)</li><li>Responsible Cost Center</li></ul><br>I\'ll query your Internal Orders so you can select which ones to update.',
+        quickReplies: ['Show Internal Orders for selection'],
+      }),
+      match: /show|start|mass|select|change/i,
+    },
+    // step 1 – IO selection table
+    {
+      joule: () => ({
+        text: 'Here are your active Internal Orders. Select the ones you want to mass-change:',
+        massChangeTable: true,
+      }),
+      match: /.+/,
+    },
+    // step 2 – confirm selection & choose field
+    {
+      joule: () => {
+        const ios = state.data.selectedIOs || [];
+        const names = ios.map(o => o.id + ' — ' + o.desc).join('<br>• ');
+        return {
+          text: `You have selected <b>${ios.length} Internal Order${ios.length !== 1 ? 's' : ''}</b>:<br><br>• ${names}<br><br>Which field would you like to update across all selected orders?`,
+          quickReplies: ['Budget Amount', 'Order Manager', 'Validity Dates', 'Cost Center'],
+        };
+      },
+      match: /.+/,
+      before: (input) => {
+        state.data.changeField = /budget/i.test(input) ? 'budget'
+          : /manager/i.test(input) ? 'manager'
+          : /validit|date/i.test(input) ? 'validity'
+          : /cost.?center/i.test(input) ? 'costcenter'
+          : 'budget';
+      },
+    },
+    // step 3 – enter new value form
+    {
+      joule: () => ({
+        text: 'Enter the new value to apply to all selected Internal Orders:',
+        massChangeForm: true,
+      }),
+      match: /budget|manager|validit|date|cost/i,
+    },
+    // step 4 – impact analysis
+    {
+      joule: () => {
+        const ios = state.data.selectedIOs || [];
+        const field = state.data.changeField;
+        const newVal = state.data.newValue || '—';
+        const fieldLabel = field === 'budget' ? 'Budget' : field === 'manager' ? 'Order Manager' : field === 'validity' ? 'Validity Dates' : 'Cost Center';
+        const rows = [['IO Number', 'Description', 'Current Value', 'New Value', 'Approval Needed']];
+        ios.forEach(o => {
+          const cur = field === 'budget' ? o.budget : field === 'manager' ? o.manager : field === 'validity' ? o.validFrom + ' → ' + o.validTo : o.costCenter;
+          const appr = field === 'budget' ? 'Yes — Finance Governance' : field === 'manager' ? 'Yes — Cost Center Manager' : field === 'costcenter' ? 'Yes — Finance Governance' : 'Notification only';
+          rows.push([o.id, o.desc, cur, newVal, appr]);
+        });
+        return {
+          text: `Impact analysis for <b>${fieldLabel}</b> change across <b>${ios.length} order${ios.length !== 1 ? 's' : ''}</b>:`,
+          table: { rows, header: true },
+          steps: [
+            { icon: '✅', text: 'No open commitments conflict with proposed change' },
+            { icon: '✅', text: 'Naming convention and controlling area — unaffected' },
+            { icon: '✅', text: 'All selected orders are in Active status' },
+            { icon: '⚠️', text: 'One consolidated approval workflow will cover all ' + ios.length + ' orders' },
+          ],
+          extraText: 'Shall I trigger a single consolidated approval for all ' + ios.length + ' orders?',
+          quickReplies: ['Yes, trigger approval', 'Cancel'],
+        };
+      },
+      match: /mass_change_submit|form_submit|submit/i,
+    },
+    // step 5 – consolidated approval
+    {
+      joule: () => ({
+        text: 'Authorization check complete.<br><br>✅ You are authorized to request this mass change.<br><br>A single consolidated approval workflow has been triggered covering all selected orders:',
+        workflow: [
+          { label: 'Requester (Suman Puthadi)', done: true },
+          { label: 'Cost Center Manager', done: false },
+          { label: 'Finance Governance Team', done: false },
+          { label: 'Master Data Team', done: false },
+        ],
+        extraText: 'Approval requests sent to all approvers. <span class="chip pending">⏳ Awaiting Consolidated Approval</span>',
+        quickReplies: ['Simulate Approval'],
+      }),
+      match: /yes|trigger|proceed/i,
+    },
+    // step 6 – approvals received
+    {
+      joule: () => ({
+        text: '✅ <b>Consolidated approval received.</b><br><br>All approvers have signed off:',
+        workflow: [
+          { label: 'Requester (Suman Puthadi)', done: true },
+          { label: 'Cost Center Manager — Approved', done: true },
+          { label: 'Finance Governance Team — Approved', done: true },
+          { label: 'Master Data Team — Approved', done: true },
+        ],
+        extraText: 'Ready to apply the mass change to all selected Internal Orders.',
+      }),
+      match: /approv|simulate/i,
+    },
+    // step 7 – confirmation gate
+    {
+      joule: () => {
+        const ios = state.data.selectedIOs || [];
+        const field = state.data.changeField;
+        const newVal = state.data.newValue || '—';
+        const fieldLabel = field === 'budget' ? 'Budget' : field === 'manager' ? 'Order Manager' : field === 'validity' ? 'Validity Dates' : 'Cost Center';
+        return {
+          text: 'Governance safeguard: Please confirm this mass change before I update master data.',
+          confirmBox: {
+            items: [
+              ['Orders Affected', ios.length + ' Internal Orders'],
+              ['IOs', ios.map(o => o.id).join(', ')],
+              ['Field Changed', fieldLabel],
+              ['New Value', newVal],
+              ['Approved By', 'Cost Center Manager, Finance Governance Team, Master Data Team'],
+            ],
+            instruction: 'Type <b>"Confirm Mass Change"</b> to proceed.',
+          },
+          quickReplies: ['Confirm Mass Change'],
+        };
+      },
+      match: /.+/,
+    },
+    // step 8 – execution
+    {
+      joule: () => {
+        const ios = state.data.selectedIOs || [];
+        const field = state.data.changeField;
+        const newVal = state.data.newValue || '—';
+        const fieldLabel = field === 'budget' ? 'Budget' : field === 'manager' ? 'Order Manager' : field === 'validity' ? 'Validity Dates' : 'Cost Center';
+        ios.forEach(o => addAudit('MASS CHANGE', 'Internal Order', o.id));
+        const resultRows = [['IO Number', 'Description', 'Field Updated', 'New Value', 'Status']];
+        ios.forEach(o => resultRows.push([o.id, o.desc, fieldLabel, newVal, '✅ Updated']));
+        return {
+          text: 'Applying mass change across ' + ios.length + ' Internal Orders…',
+          steps: [
+            { icon: '✅', text: 'Field "' + fieldLabel + '" updated on all ' + ios.length + ' orders in S/4HANA' },
+            { icon: '✅', text: 'Change documents created for each order' },
+            { icon: '✅', text: 'Master Data Repository synchronized' },
+            { icon: '✅', text: 'Budget availability / controlling data recalculated' },
+            { icon: '✅', text: 'Connected systems notified' },
+          ],
+          table: { rows: resultRows, header: true },
+          extraText: '📧 Change notifications sent to all Order Managers and Cost Center Managers.<br><br><span class="chip success">✔ Mass change completed successfully — ' + ios.length + ' orders updated</span>',
+          quickReplies: ['Query updated IOs', 'Mass Change another field', 'Advise Me on portfolio'],
+        };
+      },
+      match: /confirm mass change/i,
+    },
+    // step 9 – post-change
+    {
+      joule: () => ({
+        text: 'All ' + (state.data.selectedIOs || []).length + ' Internal Orders have been updated and are being actively monitored.<br><br>Master Data Agent will continue to track budget utilization, expiry dates, and governance compliance for all changed orders.<br><br>Is there anything else you\'d like to do?',
+        quickReplies: ['Query Internal Orders', 'Advise Me on portfolio', 'Create a new Internal Order'],
+      }),
+      match: /.+/,
+    },
+  ];
+}
+
+function submitMassSelection() {
+  const checked = document.querySelectorAll('.mc-check:checked');
+  if (!checked.length) {
+    alert('Please select at least one Internal Order.');
+    return;
+  }
+  const ios = Array.from(checked).map(cb => ({
+    id:        cb.dataset.id,
+    desc:      cb.dataset.desc,
+    budget:    cb.dataset.budget,
+    manager:   cb.dataset.manager,
+    validFrom: cb.dataset.from,
+    validTo:   cb.dataset.to,
+    costCenter: cb.dataset.cc,
+  }));
+  state.data.selectedIOs = ios;
+  document.querySelectorAll('.mc-check, .mc-submit-btn').forEach(el => el.disabled = true);
+  processInput('Selected ' + ios.length + ' orders: ' + ios.map(o => o.id).join(', '));
+}
+
+function submitMassChangeForm() {
+  const field = state.data.changeField;
+  let newValue = '';
+  if (field === 'budget') {
+    const v = (document.getElementById('mcf_budget') || {}).value || '';
+    if (!v) { alert('Please enter a budget amount.'); return; }
+    newValue = 'EUR ' + parseInt(v).toLocaleString();
+  } else if (field === 'manager') {
+    newValue = (document.getElementById('mcf_manager') || {}).value || '';
+    if (!newValue) { alert('Please select a manager.'); return; }
+  } else if (field === 'validity') {
+    const f = (document.getElementById('mcf_from') || {}).value || '';
+    const t = (document.getElementById('mcf_to')   || {}).value || '';
+    if (!f || !t) { alert('Please enter both Valid From and Valid To dates.'); return; }
+    newValue = f + ' → ' + t;
+  } else if (field === 'costcenter') {
+    newValue = (document.getElementById('mcf_cc') || {}).value || '';
+    if (!newValue) { alert('Please enter a Cost Center.'); return; }
+  }
+  state.data.newValue = newValue;
+  document.querySelectorAll('.mcf-input, .mcf-select, .mcf-submit-btn').forEach(el => el.disabled = true);
+  processInput('mass_change_submit ' + newValue);
+}
+
 // ── Audit log ────────────────────────────────────────────────────────────────
 function addAudit(action, object, id) {
   const now = new Date();
@@ -1303,6 +1515,54 @@ function buildBubble(data) {
       html += `<p><b>${k}:</b> ${v}</p>`;
     });
     html += `<div class="confirm-label" style="margin-top:10px;">👉 ${data.confirmBox.instruction}</div>`;
+    html += '</div>';
+  }
+
+  if (data.massChangeTable) {
+    const ios = [
+      { id: 'IO-782145', desc: 'AI Transformation Program',  budget: 'EUR 500,000', manager: 'Anna Mueller',   from: '01-Jul-2026', to: '31-Dec-2027', cc: 'Global Innovation', consumed: '65%', status: '🟢 Active' },
+      { id: 'IO-771032', desc: 'Digital Twin Initiative',    budget: 'EUR 300,000', manager: 'Michael Weber',  from: '01-Jan-2026', to: '30-Jun-2027', cc: 'Global Innovation', consumed: '42%', status: '🟢 Active' },
+      { id: 'IO-765881', desc: 'Cloud Migration Phase 2',    budget: 'EUR 1,200,000', manager: 'John Smith',   from: '01-Mar-2025', to: '31-Mar-2027', cc: 'Global Innovation', consumed: '89%', status: '🔴 Budget Risk' },
+      { id: 'IO-759044', desc: 'Sustainability Analytics',   budget: 'EUR 180,000', manager: 'Anna Mueller',   from: '01-Jun-2025', to: '31-Dec-2026', cc: 'Global Innovation', consumed: '31%', status: '🟢 Active' },
+      { id: 'IO-748832', desc: 'Innovation Lab Ops',         budget: 'EUR 75,000',  manager: 'Michael Weber',  from: '01-Jan-2026', to: '15-Jun-2026', cc: 'Global Innovation', consumed: '97%', status: '🔴 Critical' },
+    ];
+    html += `<table class="data-table" style="width:100%">
+      <tr><th>Select</th><th>IO Number</th><th>Description</th><th>Budget</th><th>Consumed</th><th>Manager</th><th>Status</th></tr>`;
+    ios.forEach(o => {
+      html += `<tr>
+        <td style="text-align:center"><input type="checkbox" class="mc-check" style="cursor:pointer;width:16px;height:16px;"
+          data-id="${o.id}" data-desc="${o.desc}" data-budget="${o.budget}"
+          data-manager="${o.manager}" data-from="${o.from}" data-to="${o.to}" data-cc="${o.cc}" /></td>
+        <td><b>${o.id}</b></td><td>${o.desc}</td><td>${o.budget}</td><td>${o.consumed}</td><td>${o.manager}</td><td>${o.status}</td>
+      </tr>`;
+    });
+    html += `</table>
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+      <button class="mc-submit-btn" style="background:linear-gradient(135deg,#0a6ed1,#054a8c);color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:13px;cursor:pointer;font-weight:600;" onclick="submitMassSelection()">✔ Confirm Selection</button>
+      <button style="background:#f5f5f5;border:1px solid #ccc;border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;" onclick="document.querySelectorAll('.mc-check').forEach(c=>c.checked=true)">Select All</button>
+    </div>`;
+  }
+
+  if (data.massChangeForm) {
+    const field = state.data.changeField;
+    html += '<div class="io-form">';
+    if (field === 'budget') {
+      html += `<div class="form-row form-row-full"><label class="form-label">New Budget Amount (EUR) *</label><input class="form-input mcf-input" id="mcf_budget" type="number" placeholder="e.g. 600000" /></div>`;
+    } else if (field === 'manager') {
+      html += `<div class="form-row form-row-full"><label class="form-label">New Order Manager *</label>
+        <select class="form-select mcf-select" id="mcf_manager">
+          <option value="">— Select manager —</option>
+          <option value="Anna Mueller">Anna Mueller</option>
+          <option value="Michael Weber">Michael Weber</option>
+          <option value="John Smith">John Smith</option>
+        </select></div>`;
+    } else if (field === 'validity') {
+      html += `<div class="form-row"><label class="form-label">New Valid From *</label><input class="form-input mcf-input" id="mcf_from" type="date" /></div>
+               <div class="form-row"><label class="form-label">New Valid To *</label><input class="form-input mcf-input" id="mcf_to" type="date" /></div>`;
+    } else if (field === 'costcenter') {
+      html += `<div class="form-row form-row-full"><label class="form-label">New Responsible Cost Center *</label><input class="form-input mcf-input" id="mcf_cc" placeholder="e.g. Digital Innovation" /></div>`;
+    }
+    html += `<button class="form-submit mcf-submit-btn" onclick="submitMassChangeForm()">Apply to All Selected Orders ➤</button>`;
     html += '</div>';
   }
 
@@ -1422,7 +1682,7 @@ function loadScenario(name) {
 
   document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
   const btns = document.querySelectorAll('.scenario-btn');
-  const map = ['create','change','close','query','advise'];
+  const map = ['create','change','masschange','close','query','advise'];
   const idx = map.indexOf(name);
   if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
 
@@ -1582,11 +1842,12 @@ function resetChat() {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
-scenarios.create = createScenario();
-scenarios.change = changeScenario();
-scenarios.close  = closeScenario();
-scenarios.query  = queryScenario();
-scenarios.advise = adviseScenario();
+scenarios.create     = createScenario();
+scenarios.change     = changeScenario();
+scenarios.masschange = massChangeScenario();
+scenarios.close      = closeScenario();
+scenarios.query      = queryScenario();
+scenarios.advise     = adviseScenario();
 loadScenario('create');
 </script>
 </body>
