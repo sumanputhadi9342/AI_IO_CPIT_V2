@@ -561,6 +561,9 @@
   </div>
 </div>
 
+<!-- Hidden file input for CSV upload -->
+<input type="file" id="mcUploadInput" accept=".csv" style="display:none" onchange="handleMassChangeUpload(this)" />
+
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
 const state = {
@@ -1226,10 +1229,14 @@ function massChangeScenario() {
     // step 0 – greeting
     {
       joule: () => ({
-        text: 'I can apply a single change to multiple Internal Orders at once — saving you time and ensuring consistency.<br><br>Supported mass changes:<ul style="margin:8px 0 0 18px"><li>Budget Amount</li><li>Order Manager</li><li>Validity Dates (Valid From / Valid To)</li><li>Responsible Cost Center</li></ul><br>I\'ll query your Internal Orders so you can select which ones to update.',
-        quickReplies: ['Show Internal Orders for selection'],
+        text: 'I can apply a single change to multiple Internal Orders at once — saving you time and ensuring consistency.<br><br>Supported mass changes:<ul style="margin:8px 0 0 18px"><li>Budget Amount</li><li>Order Manager</li><li>Validity Dates (Valid From / Valid To)</li><li>Responsible Cost Center</li></ul><br>Choose how you\'d like to proceed:',
+        actionButtons: [
+          { label: '📋 Show Internal Orders for selection', onclick: "handleQuickReplyText('Show Internal Orders for selection')", primary: true },
+          { label: '⬆ Upload Filled Template', onclick: "document.getElementById('mcUploadInput').click()", primary: false },
+          { label: '⬇ Download Template', onclick: 'downloadMassChangeTemplate()', primary: false },
+        ],
       }),
-      match: /show|start|mass|select|change/i,
+      match: /show|start|mass|select|change|upload/i,
     },
     // step 1 – IO selection table
     {
@@ -1428,6 +1435,93 @@ function submitMassChangeForm() {
   processInput('mass_change_submit ' + newValue);
 }
 
+function handleQuickReplyText(text) {
+  processInput(text);
+}
+
+function handleMassChangeUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) {
+      appendMessage('joule', buildBubble({ text: '⚠️ The uploaded file appears to be empty or invalid. Please use the downloaded template and fill in at least one row.' }), true);
+      return;
+    }
+    // Parse CSV — skip header row (index 0)
+    const rows = lines.slice(1).map(line => {
+      const cols = line.split(',').map(c => c.replace(/^"|"$/g,'').trim());
+      return {
+        id:        cols[0] || '',
+        desc:      cols[1] || '',
+        budget:    cols[2] ? 'EUR ' + parseInt(String(cols[2]).replace(/\D/g,'')).toLocaleString() : '',
+        manager:   cols[3] || '',
+        validFrom: cols[4] || '',
+        validTo:   cols[5] || '',
+        costCenter:cols[6] || '',
+        newBudget:    cols[7] ? 'EUR ' + parseInt(String(cols[7]).replace(/\D/g,'')).toLocaleString() : '',
+        newManager:   cols[8] || '',
+        newValidFrom: cols[9] || '',
+        newValidTo:   cols[10] || '',
+        newCC:        cols[11] || '',
+      };
+    }).filter(r => r.id);
+
+    if (!rows.length) {
+      appendMessage('joule', buildBubble({ text: '⚠️ No valid Internal Order rows found in the file. Please ensure IO Number column is filled.' }), true);
+      return;
+    }
+
+    // Determine which field was filled
+    const hasBudget   = rows.some(r => r.newBudget);
+    const hasManager  = rows.some(r => r.newManager);
+    const hasValidity = rows.some(r => r.newValidFrom || r.newValidTo);
+    const hasCC       = rows.some(r => r.newCC);
+
+    const field = hasBudget ? 'budget' : hasManager ? 'manager' : hasValidity ? 'validity' : hasCC ? 'costcenter' : null;
+
+    if (!field) {
+      appendMessage('joule', buildBubble({ text: '⚠️ No new values found in the template. Please fill in one of the "New" columns (New Budget, New Order Manager, New Valid From/To, or New Cost Center) and upload again.' }), true);
+      return;
+    }
+
+    const newVal = field === 'budget'   ? rows.find(r => r.newBudget).newBudget
+                 : field === 'manager'  ? rows.find(r => r.newManager).newManager
+                 : field === 'validity' ? (rows.find(r => r.newValidFrom).newValidFrom + ' → ' + rows.find(r => r.newValidTo || r.newValidFrom).newValidTo)
+                 :                        rows.find(r => r.newCC).newCC;
+
+    state.data.selectedIOs  = rows.map(r => ({ id: r.id, desc: r.desc, budget: r.budget, manager: r.manager, validFrom: r.validFrom, validTo: r.validTo, costCenter: r.costCenter }));
+    state.data.changeField  = field;
+    state.data.newValue     = newVal;
+
+    const fieldLabel = field === 'budget' ? 'Budget' : field === 'manager' ? 'Order Manager' : field === 'validity' ? 'Validity Dates' : 'Cost Center';
+
+    appendMessage('user', '⬆ Uploaded: ' + file.name);
+
+    // Show upload summary then jump to impact analysis (step 4 in scenario)
+    const summary = `✅ Template uploaded successfully.<br><br>
+      <b>${rows.length} Internal Order${rows.length !== 1 ? 's' : ''}</b> found in file:<br>
+      ${rows.map(r => '• ' + r.id + ' — ' + r.desc).join('<br>')}<br><br>
+      <b>Field to change:</b> ${fieldLabel}<br>
+      <b>New value:</b> ${newVal}<br><br>
+      Running impact analysis…`;
+
+    setTimeout(() => {
+      appendMessage('joule', buildBubble({ text: summary }), true);
+      // Advance scenario to step 4 (impact analysis) directly
+      state.scenario = 'masschange';
+      state.step = 4;
+      setTimeout(() => {
+        const impactData = scenarios.masschange[4].joule();
+        appendMessage('joule', buildBubble(impactData), true);
+      }, 900);
+    }, 800);
+  };
+  reader.readAsText(file);
+}
+
 function downloadMassChangeTemplate() {
   const header = ['IO Number','Description','Budget (EUR)','Order Manager','Valid From','Valid To','Cost Center','New Budget (EUR)','New Order Manager','New Valid From','New Valid To','New Cost Center'];
   const ios = [
@@ -1535,6 +1629,17 @@ function buildBubble(data) {
       html += `<p><b>${k}:</b> ${v}</p>`;
     });
     html += `<div class="confirm-label" style="margin-top:10px;">👉 ${data.confirmBox.instruction}</div>`;
+    html += '</div>';
+  }
+
+  if (data.actionButtons) {
+    html += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">';
+    data.actionButtons.forEach(btn => {
+      const style = btn.primary
+        ? 'background:linear-gradient(135deg,#0a6ed1,#054a8c);color:#fff;border:none;'
+        : 'background:#f5f5f5;border:1px solid #ccc;color:#333;';
+      html += `<button style="${style}border-radius:8px;padding:10px 18px;font-size:13px;cursor:pointer;font-weight:600;text-align:left;" onclick="${btn.onclick}">${btn.label}</button>`;
+    });
     html += '</div>';
   }
 
