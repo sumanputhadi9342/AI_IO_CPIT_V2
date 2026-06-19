@@ -1803,23 +1803,26 @@ function handleMassChangeUpload(input) {
 
     appendMessage('user', '⬆ Uploaded: ' + file.name);
 
-    // Show upload summary then jump to impact analysis (step 4 in scenario)
-    const summary = `✅ Template uploaded successfully.<br><br>
-      <b>${rows.length} Internal Order${rows.length !== 1 ? 's' : ''}</b> found in file:<br>
-      ${rows.map(r => '• ' + r.id + ' — ' + r.desc).join('<br>')}<br><br>
-      <b>Field to change:</b> ${fieldLabel}<br>
-      <b>New value:</b> ${newVal}<br><br>
-      Running impact analysis…`;
+    // Build a per-row change table and ask for confirmation before proceeding
+    const tableRows = [['IO Number', 'Description', 'Field to Change', 'Current Value', 'New Value']];
+    rows.forEach(r => {
+      const curVal = field === 'budget'   ? 'EUR ' + r.budget.replace(/\D/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,',')
+                   : field === 'manager'  ? r.manager
+                   : field === 'validity' ? r.validFrom + ' → ' + r.validTo
+                   :                        r.costCenter;
+      tableRows.push([r.id, r.desc, fieldLabel, curVal || '(current)', newVal]);
+    });
 
     setTimeout(() => {
-      appendMessage('joule', buildBubble({ text: summary }), true);
-      // Advance scenario to step 4 (impact analysis) directly
+      appendMessage('joule', buildBubble({
+        text: `✅ Template uploaded successfully — <b>${rows.length} Internal Order${rows.length !== 1 ? 's' : ''}</b> found.<br><br>Here are the changes to be applied:`,
+        table: { rows: tableRows, header: true },
+        extraText: 'Would you like to proceed with these changes?',
+        quickReplies: ['Yes, proceed with changes', 'Cancel'],
+      }), true);
+      // Advance to step 4 (impact analysis) but wait for user confirmation
       state.scenario = 'masschange';
       state.step = 4;
-      setTimeout(() => {
-        const impactData = scenarios.masschange[4].joule();
-        appendMessage('joule', buildBubble(impactData), true);
-      }, 900);
     }, 800);
   };
   reader.readAsText(file);
