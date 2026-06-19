@@ -621,7 +621,7 @@ function createScenario() {
           quickReplies: ['Assign Anna Mueller and budget EUR 500,000', 'Assign Michael Weber and budget EUR 300,000'],
         };
       },
-      match: /yes|suggest|recommend/i,
+      match: /.+/,
     },
     // step 3 – review
     {
@@ -653,7 +653,7 @@ function createScenario() {
           quickReplies: ['Yes, continue', 'Edit details'],
         };
       },
-      match: /assign|anna|michael|budget|500|300|form_submit/i,
+      match: /.+/,
       before: (input) => {
         if (/anna/i.test(input))   state.data.manager = 'Anna Mueller';
         else if (/michael/i.test(input)) state.data.manager = 'Michael Weber';
@@ -679,7 +679,7 @@ function createScenario() {
         quickReplies: ['Proceed to Create', 'Cancel'],
       }),
       before: (input) => { state.data.postValidationChoice = input; },
-      match: /yes|continue|proceed/i,
+      match: /.+/,
     },
     // step 5 – authorization
     {
@@ -718,7 +718,7 @@ function createScenario() {
         extraText: 'Ready to create the Internal Order.',
         quickReplies: ['Proceed to Create'],
       }),
-      match: /approv|simulate/i,
+      match: /.+/,
     },
     // step 7 – confirmation gate
     {
@@ -835,7 +835,7 @@ function changeScenario() {
         extraText: 'Approval requests sent. <span class="chip pending">⏳ Awaiting Approval</span>',
         quickReplies: ['Simulate Approval'],
       }),
-      match: /yes|trigger|proceed/i,
+      match: /.+/,
     },
     // step 3 – approvals complete
     {
@@ -848,7 +848,7 @@ function changeScenario() {
         ],
         extraText: 'Ready to apply the change.',
       }),
-      match: /approv|simulate/i,
+      match: /.+/,
     },
     // step 4 – confirmation gate
     {
@@ -929,7 +929,7 @@ function closeScenario() {
         extraText: 'All pre-close checks passed. <span class="chip success">✔ Order is eligible for closure</span><br><br>Shall I proceed to the approval step?',
         quickReplies: ['Yes, proceed to approval', 'Cancel'],
       }),
-      match: /close|782145|755021/i,
+      match: /.+/,
     },
     // step 2 – authorization
     {
@@ -943,7 +943,7 @@ function closeScenario() {
         extraText: 'Approval requests sent. <span class="chip pending">⏳ Awaiting Approval</span>',
         quickReplies: ['Simulate Approval'],
       }),
-      match: /yes|proceed/i,
+      match: /.+/,
     },
     // step 3 – approvals received
     {
@@ -956,7 +956,7 @@ function closeScenario() {
         ],
         extraText: 'Ready to close the Internal Order.',
       }),
-      match: /approv|simulate/i,
+      match: /.+/,
     },
     // step 4 – confirmation gate
     {
@@ -1292,7 +1292,7 @@ function massChangeScenario() {
           quickReplies: ['Yes, trigger approval', 'Cancel'],
         };
       },
-      match: /mass_change_submit|form_submit|submit/i,
+      match: /.+/,
     },
     // step 5 – consolidated approval
     {
@@ -1307,7 +1307,7 @@ function massChangeScenario() {
         extraText: 'Approval requests sent to all approvers. <span class="chip pending">⏳ Awaiting Consolidated Approval</span>',
         quickReplies: ['Simulate Approval'],
       }),
-      match: /yes|trigger|proceed/i,
+      match: /.+/,
     },
     // step 6 – approvals received
     {
@@ -1321,7 +1321,7 @@ function massChangeScenario() {
         ],
         extraText: 'Ready to apply the mass change to all selected Internal Orders.',
       }),
-      match: /approv|simulate/i,
+      match: /.+/,
     },
     // step 7 – confirmation gate
     {
