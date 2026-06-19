@@ -1428,6 +1428,26 @@ function submitMassChangeForm() {
   processInput('mass_change_submit ' + newValue);
 }
 
+function downloadMassChangeTemplate() {
+  const header = ['IO Number','Description','Budget (EUR)','Order Manager','Valid From','Valid To','Cost Center','New Budget (EUR)','New Order Manager','New Valid From','New Valid To','New Cost Center'];
+  const ios = [
+    ['IO-782145','AI Transformation Program','500000','Anna Mueller','01-Jul-2026','31-Dec-2027','Global Innovation','','','','',''],
+    ['IO-771032','Digital Twin Initiative','300000','Michael Weber','01-Jan-2026','30-Jun-2027','Global Innovation','','','','',''],
+    ['IO-765881','Cloud Migration Phase 2','1200000','John Smith','01-Mar-2025','31-Mar-2027','Global Innovation','','','','',''],
+    ['IO-759044','Sustainability Analytics','180000','Anna Mueller','01-Jun-2025','31-Dec-2026','Global Innovation','','','','',''],
+    ['IO-748832','Innovation Lab Ops','75000','Michael Weber','01-Jan-2026','15-Jun-2026','Global Innovation','','','','',''],
+  ];
+  const rows = [header, ...ios];
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'MassChange_IO_Template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── Audit log ────────────────────────────────────────────────────────────────
 function addAudit(action, object, id) {
   const now = new Date();
@@ -1537,9 +1557,10 @@ function buildBubble(data) {
       </tr>`;
     });
     html += `</table>
-    <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="mc-submit-btn" style="background:linear-gradient(135deg,#0a6ed1,#054a8c);color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:13px;cursor:pointer;font-weight:600;" onclick="submitMassSelection()">✔ Confirm Selection</button>
       <button style="background:#f5f5f5;border:1px solid #ccc;border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;" onclick="document.querySelectorAll('.mc-check').forEach(c=>c.checked=true)">Select All</button>
+      <button style="background:#e8f4e8;border:1px solid #4caf50;color:#1a7a3b;border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:600;" onclick="downloadMassChangeTemplate()">⬇ Download Template</button>
     </div>`;
   }
 
