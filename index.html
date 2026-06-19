@@ -1118,53 +1118,366 @@ function adviseScenario() {
     // step 0 – greeting
     {
       joule: () => ({
-        text: 'I can analyze your Internal Orders portfolio and provide intelligent recommendations.<br><br>I can advise on:<ul style="margin:8px 0 0 18px"><li>Orders to close this quarter</li><li>Budget risks and overrun projections</li><li>Governance violations</li><li>Portfolio optimization</li><li>Manager workload distribution</li></ul><br>What analysis would you like?',
-        quickReplies: ['Which IOs should be closed this quarter?', 'Where are the budget risks?', 'Show portfolio overview'],
+        text: 'I can analyze your Internal Orders portfolio and provide intelligent recommendations.<br><br>Choose an analysis topic:',
+        quickReplies: [
+          'Which IOs should be closed this quarter?',
+          'Where are the budget risks?',
+          'Show portfolio overview',
+          'Predict cost overruns in next 60 days',
+          'Find duplicate or redundant IOs',
+          'Review manager workload distribution',
+          'Year-end cleanup — what needs action?',
+          'Find IOs with missing settlement rules',
+          'Show budget release opportunities',
+        ],
       }),
       match: /.+/,
+      before: (input) => { state.data.adviseChoice = input; },
     },
-    // step 1 – portfolio analysis
+    // step 1 – portfolio analysis (dynamic by choice)
     {
-      joule: () => ({
-        text: 'Analyzing your Internal Orders portfolio… Running 5 analysis dimensions:',
-        steps: [
+      joule: () => {
+        const c = state.data.adviseChoice || '';
+        const isOverrun  = /overrun|predict|60/i.test(c);
+        const isDup      = /duplic|redundant/i.test(c);
+        const isWorkload = /workload|manager/i.test(c);
+        const isYearEnd  = /year.end|year end|cleanup/i.test(c);
+        const isSettle   = /settlem/i.test(c);
+        const isRelease  = /release|opportunit/i.test(c);
+        const isBudget   = /budget risk/i.test(c);
+        const isClose    = /close|quarter/i.test(c);
+
+        const checks = isOverrun ? [
+          { icon: '✅', text: 'Burn rate modeling across 45 active orders — complete' },
+          { icon: '✅', text: 'Depletion date projection (60-day window) — complete' },
+          { icon: '✅', text: 'Variance analysis vs. approved budget — complete' },
+          { icon: '✅', text: 'Historical spend trend analysis — complete' },
+          { icon: '✅', text: 'Finance Governance threshold check — complete' },
+        ] : isDup ? [
+          { icon: '✅', text: 'Name similarity scan (Levenshtein distance < 3) — complete' },
+          { icon: '✅', text: 'Same Cost Center + Order Type overlap check — complete' },
+          { icon: '✅', text: 'Active parallel spend detection — complete' },
+          { icon: '✅', text: 'Manager cross-reference — complete' },
+          { icon: '✅', text: 'Controlling area policy compliance — complete' },
+        ] : isWorkload ? [
+          { icon: '✅', text: 'Manager-to-IO assignment scan (45 orders) — complete' },
+          { icon: '✅', text: 'Active vs. inactive IO count per manager — complete' },
+          { icon: '✅', text: 'Budget responsibility per manager — complete' },
+          { icon: '✅', text: 'Approval bottleneck analysis — complete' },
+          { icon: '✅', text: 'Corporate policy CP-007 — max 8 IOs per manager — checked' },
+        ] : isYearEnd ? [
+          { icon: '✅', text: 'Fiscal year close date check (31-Dec-2026) — complete' },
+          { icon: '✅', text: 'Open commitments and accruals scan — complete' },
+          { icon: '✅', text: 'Settlement rule validation for all active orders — complete' },
+          { icon: '✅', text: 'Budget carry-forward eligibility check — complete' },
+          { icon: '✅', text: 'Governance and compliance sign-off status — complete' },
+        ] : isSettle ? [
+          { icon: '✅', text: 'Settlement rule completeness check across 45 IOs — complete' },
+          { icon: '✅', text: 'Settlement receiver validity (cost centers active) — complete' },
+          { icon: '✅', text: 'Allocation percentage sum validation (must = 100%) — complete' },
+          { icon: '✅', text: 'Periodic settlement run history — complete' },
+          { icon: '✅', text: 'IFRS / local GAAP classification check — complete' },
+        ] : isRelease ? [
+          { icon: '✅', text: 'Budget utilization scan (< 30% consumed, > 6 months active) — complete' },
+          { icon: '✅', text: 'Remaining commitment check — complete' },
+          { icon: '✅', text: 'Activity trend (last 90 days) — complete' },
+          { icon: '✅', text: 'Project completion status from PM module — complete' },
+          { icon: '✅', text: 'Finance Governance release threshold check — complete' },
+        ] : isBudget ? [
+          { icon: '✅', text: 'Budget consumption rate modeling — complete' },
+          { icon: '✅', text: 'Commitment + actual spend aggregation — complete' },
+          { icon: '✅', text: 'Alert threshold breach detection (75% / 90%) — complete' },
+          { icon: '✅', text: 'Burn rate extrapolation — complete' },
+          { icon: '✅', text: 'Finance Governance notification status — complete' },
+        ] : [
           { icon: '✅', text: 'Posting activity analysis — complete (45 orders scanned)' },
           { icon: '✅', text: 'Budget utilization modeling — complete' },
           { icon: '✅', text: 'Expiry date risk assessment — complete' },
           { icon: '✅', text: 'Governance compliance check — complete' },
           { icon: '✅', text: 'Manager assignment validity — complete' },
-        ],
-        extraText: 'Analysis complete. Here are my recommendations:',
-      }),
+        ];
+        return {
+          text: 'Analyzing your Internal Orders portfolio…',
+          steps: checks,
+          extraText: 'Analysis complete. Here are my recommendations:',
+        };
+      },
       match: /.+/,
     },
-    // step 2 – recommendations
-    {
-      joule: () => ({
-        text: 'Portfolio recommendations for Q3 2026:',
-        table: {
-          rows: [
-            ['IO Number', 'Description', 'Recommendation', 'Priority', 'Reason'],
-            ['IO-755021', 'Legacy ERP Cleanup', '🔒 Close', '🔴 High', 'No postings 180d; expires Jul-26'],
-            ['IO-742300', 'Pilot BI Project', '🔒 Close', '🔴 High', 'Fully settled; EUR 0 remaining'],
-            ['IO-748832', 'Innovation Lab Ops', '🔒 Close or Extend', '🔴 Critical', 'Expires in 13 days; 97% consumed'],
-            ['IO-765881', 'Cloud Migration Ph.2', '⚠️ Budget Review', '🟠 Medium', '89% consumed; 47d to depletion'],
-            ['IO-759044', 'Sustainability Analytics', '📋 Review Manager', '🟡 Low', 'Manager on leave — reassign'],
-            ['IO-771032', 'Digital Twin Initiative', '✅ On Track', '🟢 None', 'Normal utilization and activity'],
-            ['IO-782145', 'AI Transformation', '✅ On Track', '🟢 None', 'Normal utilization and activity'],
-          ],
-          header: true,
-        },
-        extraText: '<b>Summary:</b> 3 orders for immediate action, 1 budget review, 1 governance item.<br><br>Estimated budget release from closures: <b>EUR 52,250</b><br><br>Would you like me to initiate any of these actions?',
-        quickReplies: ['Close IO-755021 and IO-742300', 'Request budget review for IO-765881', 'Reassign IO-759044 manager', 'Take all recommended actions'],
-      }),
-      match: /.+/,
-    },
-    // step 3 – bulk action
+    // step 2 – recommendations (dynamic by choice)
     {
       joule: () => {
-        const isAll  = /all|bulk/i.test(state.data.adviseInput || '');
-        const isBudg = /budget|765881/i.test(state.data.adviseInput || '');
+        const c = state.data.adviseChoice || '';
+        const isOverrun  = /overrun|predict|60/i.test(c);
+        const isDup      = /duplic|redundant/i.test(c);
+        const isWorkload = /workload|manager/i.test(c);
+        const isYearEnd  = /year.end|year end|cleanup/i.test(c);
+        const isSettle   = /settlem/i.test(c);
+        const isRelease  = /release|opportunit/i.test(c);
+        const isBudget   = /budget risk/i.test(c);
+
+        if (isOverrun) return {
+          text: 'Cost overrun prediction — next 60 days:',
+          table: {
+            rows: [
+              ['IO Number', 'Description', 'Budget', 'Consumed', 'Burn Rate/Month', 'Depletion Date', 'Risk'],
+              ['IO-765881', 'Cloud Migration Ph.2', 'EUR 1.2M', '89%', 'EUR 28K', '22-Jul-2026', '🔴 Critical'],
+              ['IO-748832', 'Innovation Lab Ops', 'EUR 75K', '97%', 'EUR 9K', '01-Jul-2026', '🔴 Critical'],
+              ['IO-782145', 'AI Transformation', 'EUR 500K', '65%', 'EUR 18K', '14-Sep-2026', '🟠 High'],
+              ['IO-759044', 'Sustainability Analytics', 'EUR 180K', '31%', 'EUR 4K', 'Apr-2027', '🟢 Low'],
+              ['IO-771032', 'Digital Twin Initiative', 'EUR 300K', '42%', 'EUR 7K', 'Dec-2026', '🟢 Low'],
+            ],
+            header: true,
+          },
+          extraText: '⚠️ <b>2 orders will be depleted within 60 days.</b><br>• IO-765881: request EUR 300K extension immediately<br>• IO-748832: close or extend — expires 15-Jun-2026<br><br>Recommended actions?',
+          quickReplies: ['Request extension for IO-765881', 'Close IO-748832', 'Notify both managers', 'Take all actions'],
+        };
+
+        if (isDup) return {
+          text: 'Duplicate and redundant Internal Order analysis:',
+          table: {
+            rows: [
+              ['IO Group', 'IO Numbers', 'Description Overlap', 'Cost Center', 'Combined Budget', 'Recommendation'],
+              ['Group A', 'IO-755021 + IO-742300', 'ERP Cleanup / ERP Pilot', 'Global Innovation', 'EUR 12,250', '🔒 Consolidate & Close'],
+              ['Group B', 'IO-782145 + IO-771032', 'AI Program / Digital Twin', 'Global Innovation', 'EUR 800,000', '📋 Review Scope Overlap'],
+              ['Group C', 'IO-759044 + IO-738001', 'Sustainability / Procurement', 'Global Innovation', 'EUR 200,000', '✅ No Action — distinct scope'],
+            ],
+            header: true,
+          },
+          extraText: '<b>Findings:</b> 2 potential consolidation opportunities identified.<br>• Group A: both orders cover legacy ERP — strong case for consolidation<br>• Group B: overlapping AI/digital scope — management review recommended<br><br>Estimated budget release from consolidation: <b>EUR 12,250</b>',
+          quickReplies: ['Consolidate Group A orders', 'Flag Group B for management review', 'Take both actions'],
+        };
+
+        if (isWorkload) return {
+          text: 'Manager workload distribution across Internal Orders:',
+          table: {
+            rows: [
+              ['Manager', 'Active IOs', 'Total Budget Responsibility', 'Pending Approvals', 'Policy Limit', 'Status'],
+              ['Anna Mueller', '3', 'EUR 680,000', '1', '8 IOs', '🟢 Within limit'],
+              ['Michael Weber', '2', 'EUR 375,000', '0', '8 IOs', '🟢 Within limit'],
+              ['John Smith', '3', 'EUR 1,480,000', '2', '8 IOs', '🟠 High budget load'],
+              ['Sarah Hoffmann', '1', 'EUR 180,000', '0', '8 IOs', '🔴 On extended leave'],
+              ['(Unassigned)', '1', 'EUR 95,000', '—', '—', '🔴 No manager assigned'],
+            ],
+            header: true,
+          },
+          extraText: '<b>Issues found:</b><br>• Sarah Hoffmann is on extended leave — IO-759044 needs manager reassignment (CP-007 violation)<br>• IO-738001 has no assigned manager — approval workflows are blocked<br>• John Smith carries 62% of total budget responsibility — consider rebalancing<br>',
+          quickReplies: ['Reassign IO-759044 to Anna Mueller', 'Assign manager to IO-738001', 'Rebalance John Smith portfolio', 'Fix all issues'],
+        };
+
+        if (isYearEnd) return {
+          text: 'Year-end cleanup analysis — actions required before 31-Dec-2026:',
+          table: {
+            rows: [
+              ['IO Number', 'Description', 'Action Required', 'Deadline', 'Priority', 'Reason'],
+              ['IO-755021', 'Legacy ERP Cleanup', '🔒 Close', 'Nov-2026', '🔴 High', 'No activity 180d; unspent EUR 7,250'],
+              ['IO-742300', 'Pilot BI Project', '🔒 Close', 'Nov-2026', '🔴 High', 'Fully settled; no open items'],
+              ['IO-748832', 'Innovation Lab Ops', '🔒 Close or Extend', 'Jun-2026', '🔴 Critical', 'Expires in 13 days'],
+              ['IO-759044', 'Sustainability Analytics', '⚙️ Fix Settlement Rule', 'Oct-2026', '🟠 Medium', 'Missing settlement receiver'],
+              ['IO-782145', 'AI Transformation', '📋 Budget Review', 'Oct-2026', '🟠 Medium', 'Carry-forward request needed'],
+              ['IO-771032', 'Digital Twin Initiative', '✅ No Action', '—', '🟢 None', 'Fully compliant'],
+              ['IO-765881', 'Cloud Migration Ph.2', '💰 Budget Extension', 'Jul-2026', '🔴 High', 'Will deplete before year-end'],
+            ],
+            header: true,
+          },
+          extraText: '<b>Year-end readiness:</b> 5 of 7 orders require action before Dec-2026.<br>Estimated unspent budget to release: <b>EUR 52,250</b><br>Carry-forward requests needed: <b>2 orders</b>',
+          quickReplies: ['Initiate all closures', 'Fix settlement rules', 'Submit carry-forward requests', 'Take all recommended actions'],
+        };
+
+        if (isSettle) return {
+          text: 'Settlement rule audit across all active Internal Orders:',
+          table: {
+            rows: [
+              ['IO Number', 'Description', 'Settlement Rule', 'Receiver', 'Allocation %', 'Last Run', 'Status'],
+              ['IO-782145', 'AI Transformation', 'Periodic', 'CC Global Innovation', '100%', 'May-2026', '✅ Valid'],
+              ['IO-771032', 'Digital Twin Initiative', 'Periodic', 'CC Global Innovation', '100%', 'May-2026', '✅ Valid'],
+              ['IO-765881', 'Cloud Migration Ph.2', 'Full', 'CC IT Operations', '100%', 'Apr-2026', '⚠️ Overdue — run now'],
+              ['IO-759044', 'Sustainability Analytics', 'None', '—', '—', 'Never', '🔴 Missing rule'],
+              ['IO-755021', 'Legacy ERP Cleanup', 'Full', 'CC Legacy Systems', '100%', 'Dec-2025', '🔴 Receiver inactive'],
+              ['IO-748832', 'Innovation Lab Ops', 'Periodic', 'CC R&D', '80% / 20%', 'May-2026', '⚠️ Sum ≠ 100%'],
+              ['IO-742300', 'Pilot BI Project', 'Full', 'CC Analytics', '100%', 'Mar-2026', '✅ Valid'],
+            ],
+            header: true,
+          },
+          extraText: '<b>Settlement issues found in 3 orders:</b><br>• IO-759044: no settlement rule defined — cannot close at year-end<br>• IO-755021: settlement receiver (CC Legacy Systems) is inactive<br>• IO-748832: allocation percentages do not sum to 100%<br>',
+          quickReplies: ['Create settlement rule for IO-759044', 'Fix IO-755021 receiver', 'Fix IO-748832 allocation', 'Fix all settlement issues'],
+        };
+
+        if (isRelease) return {
+          text: 'Budget release opportunities — underutilized Internal Orders:',
+          table: {
+            rows: [
+              ['IO Number', 'Description', 'Total Budget', 'Consumed', 'Releasable Budget', 'Last Activity', 'Recommendation'],
+              ['IO-755021', 'Legacy ERP Cleanup', 'EUR 60K', '12%', 'EUR 52,800', '180 days ago', '🔴 Release immediately'],
+              ['IO-742300', 'Pilot BI Project', 'EUR 45K', '0%', 'EUR 45,000', 'Never', '🔴 Release immediately'],
+              ['IO-738001', 'Procurement Automation', 'EUR 120K', '22%', 'EUR 93,600', '42 days ago', '🟠 Review & release partial'],
+              ['IO-759044', 'Sustainability Analytics', 'EUR 180K', '31%', 'EUR 124,200', '15 days ago', '🟡 Active — hold'],
+              ['IO-771032', 'Digital Twin Initiative', 'EUR 300K', '42%', 'EUR 174,000', '3 days ago', '🟢 Active — no action'],
+            ],
+            header: true,
+          },
+          extraText: '<b>Total releasable budget: EUR 191,400</b> across 3 candidates.<br>Releasing these funds returns budget to the Cost Center pool for reallocation.<br>',
+          quickReplies: ['Release IO-755021 and IO-742300 budgets', 'Schedule partial release for IO-738001', 'Release all eligible budgets'],
+        };
+
+        if (isBudget) return {
+          text: 'Budget risk analysis across all active Internal Orders:',
+          table: {
+            rows: [
+              ['IO Number', 'Description', 'Budget', 'Consumed', 'Remaining', 'Burn Rate', 'Depletion', 'Risk'],
+              ['IO-765881', 'Cloud Migration Ph.2', 'EUR 1.2M', '89%', 'EUR 132K', 'EUR 28K/mo', '22-Jul-26', '🔴 Critical'],
+              ['IO-748832', 'Innovation Lab Ops', 'EUR 75K', '97%', 'EUR 2.25K', 'EUR 9K/mo', '01-Jul-26', '🔴 Critical'],
+              ['IO-782145', 'AI Transformation', 'EUR 500K', '85%', 'EUR 75K', 'EUR 18K/mo', '14-Sep-26', '🟠 High'],
+              ['IO-771032', 'Digital Twin Initiative', 'EUR 300K', '42%', 'EUR 174K', 'EUR 7K/mo', 'Dec-26', '🟢 Low'],
+              ['IO-759044', 'Sustainability Analytics', 'EUR 180K', '31%', 'EUR 124K', 'EUR 4K/mo', 'Apr-27', '🟢 Low'],
+            ],
+            header: true,
+          },
+          extraText: '⚠️ <b>3 orders at risk</b> — 2 critical, 1 high.<br>Combined at-risk remaining budget: <b>EUR 209,250</b><br>Recommended: immediate extension requests for IO-765881 and IO-782145.',
+          quickReplies: ['Request extension for IO-765881', 'Request extension for IO-782145', 'Notify all managers', 'Take all actions'],
+        };
+
+        // default – portfolio overview / close this quarter
+        return {
+          text: 'Portfolio recommendations for Q3 2026:',
+          table: {
+            rows: [
+              ['IO Number', 'Description', 'Recommendation', 'Priority', 'Reason'],
+              ['IO-755021', 'Legacy ERP Cleanup', '🔒 Close', '🔴 High', 'No postings 180d; expires Jul-26'],
+              ['IO-742300', 'Pilot BI Project', '🔒 Close', '🔴 High', 'Fully settled; EUR 0 remaining'],
+              ['IO-748832', 'Innovation Lab Ops', '🔒 Close or Extend', '🔴 Critical', 'Expires in 13 days; 97% consumed'],
+              ['IO-765881', 'Cloud Migration Ph.2', '⚠️ Budget Review', '🟠 Medium', '89% consumed; 47d to depletion'],
+              ['IO-759044', 'Sustainability Analytics', '📋 Review Manager', '🟡 Low', 'Manager on leave — reassign'],
+              ['IO-771032', 'Digital Twin Initiative', '✅ On Track', '🟢 None', 'Normal utilization and activity'],
+              ['IO-782145', 'AI Transformation', '✅ On Track', '🟢 None', 'Normal utilization and activity'],
+            ],
+            header: true,
+          },
+          extraText: '<b>Summary:</b> 3 orders for immediate action, 1 budget review, 1 governance item.<br>Estimated budget release from closures: <b>EUR 52,250</b>',
+          quickReplies: ['Close IO-755021 and IO-742300', 'Request budget review for IO-765881', 'Reassign IO-759044 manager', 'Take all recommended actions'],
+        };
+      },
+      match: /.+/,
+    },
+    // step 3 – action initiation (dynamic)
+    {
+      joule: () => {
+        const choice = state.data.adviseChoice || '';
+        const action = state.data.adviseAction || '';
+        const isAll  = /all|bulk|take all/i.test(action);
+
+        const isOverrun  = /overrun|predict|60/i.test(choice);
+        const isDup      = /duplic|redundant/i.test(choice);
+        const isWorkload = /workload|manager/i.test(choice);
+        const isYearEnd  = /year.end|year end|cleanup/i.test(choice);
+        const isSettle   = /settlem/i.test(choice);
+        const isRelease  = /release|opportunit/i.test(choice);
+        const isBudget   = /budget risk/i.test(choice);
+
+        if (isOverrun) {
+          const steps = isAll ? [
+            { icon: '✅', text: 'IO-765881: EUR 300,000 budget extension request sent to Finance Governance' },
+            { icon: '✅', text: 'IO-748832: pre-close checks passed — closure workflow initiated' },
+            { icon: '✅', text: 'Both managers notified via email' },
+          ] : [
+            { icon: '✅', text: 'Budget extension request created for IO-765881' },
+            { icon: '✅', text: 'Finance Governance Team notified — review within 2 business days' },
+          ];
+          return { text: 'Initiating cost overrun prevention actions…', steps, extraText: '<span class="chip success">✔ Actions queued successfully</span>', quickReplies: ['View approval status', 'Query at-risk IOs'] };
+        }
+
+        if (isDup) {
+          return {
+            text: 'Initiating duplicate IO consolidation…',
+            steps: [
+              { icon: '✅', text: 'IO-755021 & IO-742300: pre-close checks passed — closure workflows queued' },
+              { icon: '✅', text: 'Group B scope overlap flagged for management review — email sent' },
+              { icon: '✅', text: 'Consolidation report generated and sent to Finance Governance' },
+            ],
+            extraText: 'Estimated budget release: <b>EUR 12,250</b><br><span class="chip success">✔ Consolidation workflows initiated</span>',
+            quickReplies: ['View approval status', 'Query remaining active IOs'],
+          };
+        }
+
+        if (isWorkload) {
+          addAudit('CHANGE', 'Internal Order', 'IO-759044');
+          return {
+            text: 'Fixing manager workload issues…',
+            steps: [
+              { icon: '✅', text: 'IO-759044: reassignment workflow triggered — Anna Mueller proposed' },
+              { icon: '✅', text: 'IO-738001: manager assignment request sent to Cost Center Manager' },
+              { icon: '✅', text: 'John Smith portfolio rebalancing recommendation sent to management' },
+              { icon: '✅', text: 'CP-007 compliance audit record updated' },
+            ],
+            extraText: '<span class="chip success">✔ Workload corrections initiated</span>',
+            quickReplies: ['Simulate approval for IO-759044', 'Query all IOs by manager'],
+          };
+        }
+
+        if (isYearEnd) {
+          addAudit('CLOSE', 'Internal Order', 'IO-755021');
+          addAudit('CLOSE', 'Internal Order', 'IO-742300');
+          return {
+            text: 'Initiating year-end cleanup actions…',
+            steps: [
+              { icon: '✅', text: 'IO-755021: pre-close checks passed — closure queued for approval' },
+              { icon: '✅', text: 'IO-742300: pre-close checks passed — closure queued for approval' },
+              { icon: '✅', text: 'IO-748832: urgent closure workflow triggered (expires in 13 days)' },
+              { icon: '✅', text: 'IO-765881: budget extension + carry-forward request sent to Finance' },
+              { icon: '⚠️', text: 'IO-759044: settlement rule creation request raised — pending controller' },
+              { icon: '✅', text: 'IO-782145: carry-forward eligibility confirmed — request submitted' },
+            ],
+            extraText: 'Expected budget release: <b>EUR 52,250</b><br>Carry-forward requests: <b>2 submitted</b><br><span class="chip success">✔ Year-end cleanup initiated — 6 actions queued</span>',
+            quickReplies: ['View all pending approvals', 'Query year-end status'],
+          };
+        }
+
+        if (isSettle) {
+          return {
+            text: 'Fixing settlement rule issues…',
+            steps: [
+              { icon: '✅', text: 'IO-759044: settlement rule created — receiver: CC Sustainability (100%)' },
+              { icon: '✅', text: 'IO-755021: settlement receiver updated to CC Global Innovation (active)' },
+              { icon: '✅', text: 'IO-748832: allocation corrected to 80% CC R&D / 20% CC Innovation' },
+              { icon: '✅', text: 'Change documents created for all 3 orders in S/4HANA' },
+              { icon: '✅', text: 'Periodic settlement run triggered for IO-765881' },
+            ],
+            extraText: '<span class="chip success">✔ All settlement rules corrected — orders are now year-end ready</span>',
+            quickReplies: ['Run settlement simulation', 'Query updated IOs'],
+          };
+        }
+
+        if (isRelease) {
+          addAudit('CLOSE', 'Internal Order', 'IO-755021');
+          addAudit('CLOSE', 'Internal Order', 'IO-742300');
+          return {
+            text: 'Initiating budget release workflows…',
+            steps: [
+              { icon: '✅', text: 'IO-755021: EUR 52,800 release — pre-close checks passed, queued for approval' },
+              { icon: '✅', text: 'IO-742300: EUR 45,000 release — pre-close checks passed, queued for approval' },
+              { icon: '✅', text: 'IO-738001: partial release EUR 50,000 — review request sent to Cost Center Manager' },
+              { icon: '✅', text: 'Finance Governance notified of total EUR 147,800 release request' },
+            ],
+            extraText: 'Total budget to be released: <b>EUR 147,800</b><br><span class="chip success">✔ Release workflows initiated</span>',
+            quickReplies: ['View approval status', 'Query Cost Center pool'],
+          };
+        }
+
+        if (isBudget) {
+          return {
+            text: 'Initiating budget risk mitigation actions…',
+            steps: [
+              { icon: '✅', text: 'IO-765881: EUR 300K extension request sent to Finance Governance' },
+              { icon: '✅', text: 'IO-748832: urgent close/extend decision request sent to Cost Center Manager' },
+              { icon: '✅', text: 'IO-782145: EUR 100K extension request sent — burn rate justification attached' },
+              { icon: '✅', text: 'All three managers notified via email' },
+            ],
+            extraText: 'Budget extension requests submitted: <b>3</b><br><span class="chip success">✔ Risk mitigation actions initiated</span>',
+            quickReplies: ['View approval status', 'Monitor budget alerts'],
+          };
+        }
+
+        // default — portfolio close
         if (isAll) {
           return {
             text: 'Initiating all recommended actions. Running pre-checks for each order…',
@@ -1175,13 +1488,14 @@ function adviseScenario() {
               { icon: '⚠️', text: 'IO-765881: budget review request created — sent to Finance Governance' },
               { icon: '✅', text: 'IO-759044: manager reassignment workflow triggered' },
             ],
-            extraText: 'All actions initiated. Approval workflows sent to relevant approvers.<br><br>Expected completion: <b>2–3 business days</b><br><br><span class="chip success">✔ 5 actions queued successfully</span>',
+            extraText: 'All actions initiated.<br>Expected completion: <b>2–3 business days</b><br><span class="chip success">✔ 5 actions queued successfully</span>',
             quickReplies: ['View approval status', 'View audit trail'],
           };
         }
-        if (isBudg) {
+        if (/budget|765881/i.test(action)) {
           return {
-            text: 'Budget review request created for <b>IO-765881 — Cloud Migration Phase 2</b>:<br><br>Review details sent to Finance Governance Team with:<br>• Current utilization: 89% (EUR 1,068,000 / EUR 1,200,000)<br>• Projected depletion: 47 days<br>• Recommended extension: EUR 300,000<br>• Burn rate analysis attached<br><br>Awaiting Finance Governance response.',
+            text: 'Budget review request created for <b>IO-765881 — Cloud Migration Phase 2</b>.',
+            extraText: 'Current utilization: 89% · Projected depletion: 47 days · Recommended extension: EUR 300,000<br>Sent to Finance Governance Team.',
             quickReplies: ['Also close IO-755021', 'View all pending approvals'],
           };
         }
@@ -1193,30 +1507,19 @@ function adviseScenario() {
             { icon: '✅', text: 'IO-755021: pre-close checks passed' },
             { icon: '✅', text: 'IO-742300: pre-close checks passed' },
             { icon: '✅', text: 'Approval requests sent to Cost Center Manager' },
-            { icon: '✅', text: 'Audit entries created for both orders' },
           ],
-          extraText: 'Both closure workflows are in progress.<br><br>Estimated budget released when approved: <b>EUR 7,250</b><br><br>You will be notified when approvals are complete.',
-          quickReplies: ['Also request budget review for IO-765881', 'View audit trail', 'Query all pending closures'],
+          extraText: 'Estimated budget released: <b>EUR 7,250</b>',
+          quickReplies: ['Also request budget review for IO-765881', 'View audit trail'],
         };
       },
       match: /.+/,
-      before: (input) => { state.data.adviseInput = input; },
+      before: (input) => { state.data.adviseAction = input; },
     },
     // step 4 – wrap up
     {
       joule: () => ({
-        text: 'Portfolio optimization actions are all in progress. Here\'s a summary of what was initiated:',
-        table: {
-          rows: [
-            ['Action', 'Orders', 'Status'],
-            ['Close', 'IO-755021, IO-742300', '⏳ Pending Approval'],
-            ['Budget Review', 'IO-765881', '⏳ Sent to Finance'],
-            ['Manager Reassign', 'IO-759044', '⏳ Pending'],
-          ],
-          header: true,
-        },
-        extraText: 'Master Data Agent- Internal Order will notify you as each action is approved and completed.<br><br>Is there anything else you\'d like me to analyze or act on?',
-        quickReplies: ['Create a new IO', 'Query remaining active IOs', 'Show governance alerts'],
+        text: 'All actions are in progress and being tracked. Master Data Agent will notify you as each approval is completed.<br><br>Is there anything else you\'d like me to analyze?',
+        quickReplies: ['Show another analysis', 'Query all active IOs', 'Create a new IO', 'Mass Change IOs'],
       }),
       match: /.+/,
     },
