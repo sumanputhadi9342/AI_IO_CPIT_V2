@@ -674,10 +674,9 @@ function createScenario() {
         extraText: '<span class="chip success">✔ All validations passed successfully</span>',
         quickReplies: ['Proceed to Create', 'Cancel'],
       }),
+      before: (input) => { state.data.postValidationChoice = input; },
       match: /yes|continue|proceed/i,
     },
-    // step 4b – cancel handler (injected inline via before hook)
-
     // step 5 – authorization
     {
       joule: () => {
@@ -700,7 +699,6 @@ function createScenario() {
           quickReplies: ['Simulate Approval'],
         };
       },
-      before: (input) => { state.data.postValidationChoice = input; },
       match: /.+/,
     },
     // step 6 – approval simulation
@@ -1473,6 +1471,16 @@ function processInput(text) {
 
   setTimeout(() => {
     removeTyping();
+
+    // check match guard — if defined and doesn't match, reprompt
+    if (currentStep && currentStep.match && !currentStep.match.test(text)) {
+      appendMessage('joule', buildBubble({
+        text: 'I\'m not sure I understood that. Please use one of the options above or rephrase your request.',
+        quickReplies: currentStep.joule().quickReplies || [],
+      }), true);
+      setInputEnabled(true);
+      return;
+    }
 
     // run before-hook if defined
     if (currentStep && currentStep.before) currentStep.before(text);

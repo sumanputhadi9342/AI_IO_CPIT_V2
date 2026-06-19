@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAP AI Resources — Quick Links</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #eef2f7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      color: #1d2433;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #0a6ed1 0%, #054a8c 100%);
+      color: #fff;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      box-shadow: 0 3px 12px rgba(10,110,209,.35);
+    }
+    .header-logo {
+      width: 38px; height: 38px;
+      background: rgba(255,255,255,.15);
+      border: 2px solid rgba(255,255,255,.4);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; color: #fff; font-size: 13px;
+      letter-spacing: -.5px; flex-shrink: 0;
+    }
+    .header-title { font-size: 16px; font-weight: 700; flex: 1; letter-spacing: -.2px; }
+    .header-badge {
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 11px; font-weight: 600; letter-spacing: .3px;
+    }
+
+    /* ── HERO ────────────────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #0a6ed1 0%, #054a8c 100%);
+      color: #fff;
+      padding: 32px 32px 40px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .hero p  { font-size: 14px; opacity: .85; max-width: 600px; margin: 0 auto; }
+
+    /* ── MAIN CONTENT ────────────────────────────────────────────────────── */
+    .content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+      width: 100%;
+    }
+
+    /* ── SECTION ─────────────────────────────────────────────────────────── */
+    .section { margin-bottom: 36px; }
+    .section-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .section-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .section-icon.blue  { background: #ddeeff; }
+    .section-icon.green { background: #e0f5ea; }
+    .section-icon.purple{ background: #ede8ff; }
+    .section-title  { font-size: 16px; font-weight: 700; color: #1d2433; }
+    .section-subtitle { font-size: 12px; color: #6b7280; margin-top: 1px; }
+
+    /* ── GRID ────────────────────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+    .grid-2 { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+
+    /* ── CARD ────────────────────────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: box-shadow .15s, transform .15s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      box-shadow: 0 8px 24px rgba(10,110,209,.12);
+      transform: translateY(-2px);
+      border-color: #b0cef5;
+    }
+    .card-top { display: flex; align-items: flex-start; gap: 12px; }
+    .card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .card-icon.blue   { background: #ddeeff; }
+    .card-icon.green  { background: #e0f5ea; }
+    .card-icon.purple { background: #ede8ff; }
+    .card-icon.orange { background: #fff0e0; }
+    .card-name { font-size: 14px; font-weight: 700; color: #1d2433; line-height: 1.3; }
+    .card-desc { font-size: 12px; color: #6b7280; line-height: 1.5; }
+    .card-url  {
+      font-size: 11px; color: #0a6ed1; font-family: monospace;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      background: #f0f6ff; border-radius: 6px; padding: 4px 8px;
+    }
+    .card-action {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(135deg, #0a6ed1, #054a8c);
+      color: #fff; font-size: 12px; font-weight: 600;
+      padding: 7px 14px; border-radius: 7px;
+      text-decoration: none; align-self: flex-start;
+      transition: opacity .15s;
+    }
+    .card-action:hover { opacity: .87; }
+
+    /* ── DIVIDER ──────────────────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 8px 0 24px; }
+
+    /* ── FOOTER ──────────────────────────────────────────────────────────── */
+    .footer {
+      text-align: center; padding: 20px;
+      font-size: 11px; color: #9ca3af;
+      border-top: 1px solid #e2e8f0;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-logo">SAP</div>
+    <div class="header-title">SAP AI Resources</div>
+    <div class="header-badge">Quick Links</div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Explore SAP AI Tools &amp; Platforms</h1>
+    <p>Bookmark these resources and start experimenting with EKX, GenAI Hub, and AI Core cost planning.</p>
+  </div>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- EKX Tools -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-icon blue">🔍</div>
+        <div>
+          <div class="section-title">EKX — Enterprise Knowledge Exchange</div>
+          <div class="section-subtitle">Chat and graph-based knowledge search</div>
+        </div>
+      </div>
+      <div class="grid grid-2">
+
+        <a class="card" href="https://ekx.cloud.sap/chat/" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon blue">💬</div>
+            <div>
+              <div class="card-name">EKX Chat</div>
+              <div class="card-desc">Conversational AI interface for querying SAP enterprise knowledge. Ask questions and get contextual answers.</div>
+            </div>
+          </div>
+          <div class="card-url">ekx.cloud.sap/chat/</div>
+          <a class="card-action" href="https://ekx.cloud.sap/chat/" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+        <a class="card" href="https://ekx.cloud.sap/tools/search" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon blue">🕸️</div>
+            <div>
+              <div class="card-name">EKX Graph Search</div>
+              <div class="card-desc">Explore knowledge graphs to discover relationships and connections across SAP data entities.</div>
+            </div>
+          </div>
+          <div class="card-url">ekx.cloud.sap/tools/search</div>
+          <a class="card-action" href="https://ekx.cloud.sap/tools/search" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- Cost Calculators -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-icon green">🧮</div>
+        <div>
+          <div class="section-title">Cost Calculators</div>
+          <div class="section-subtitle">Estimate usage costs for GenAI Hub and AI Core</div>
+        </div>
+      </div>
+      <div class="grid grid-2">
+
+        <a class="card" href="https://ai-core-calculator.cfapps.eu10.hana.ondemand.com/uimodule/index.html#/gen" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon green">💡</div>
+            <div>
+              <div class="card-name">GenAI Hub Cost Calculator</div>
+              <div class="card-desc">Estimate token usage and costs for generative AI workloads running through the GenAI Hub.</div>
+            </div>
+          </div>
+          <div class="card-url">ai-core-calculator…/index.html#/gen</div>
+          <a class="card-action" href="https://ai-core-calculator.cfapps.eu10.hana.ondemand.com/uimodule/index.html#/gen" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+        <a class="card" href="https://ai-core-calculator.cfapps.eu10.hana.ondemand.com/uimodule/index.html#/core" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon green">⚙️</div>
+            <div>
+              <div class="card-name">AI Core Cost Calculator</div>
+              <div class="card-desc">Plan and estimate infrastructure costs for AI Core — training, deployment, and inference workloads.</div>
+            </div>
+          </div>
+          <div class="card-url">ai-core-calculator…/index.html#/core</div>
+          <a class="card-action" href="https://ai-core-calculator.cfapps.eu10.hana.ondemand.com/uimodule/index.html#/core" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- GenAI Hub -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-icon purple">🤖</div>
+        <div>
+          <div class="section-title">GenAI Hub — SAP AI Launchpad</div>
+          <div class="section-subtitle">Model selection, prompt engineering, orchestration, and optimization</div>
+        </div>
+      </div>
+      <div class="grid">
+
+        <a class="card" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon purple">📚</div>
+            <div>
+              <div class="card-name">Model Library</div>
+              <div class="card-desc">Browse and choose the right LLM from the catalog for your use case.</div>
+            </div>
+          </div>
+          <div class="card-url">…/generativeaihub → Model Library</div>
+          <a class="card-action" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+        <a class="card" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon purple">🎮</div>
+            <div>
+              <div class="card-name">AI Playground</div>
+              <div class="card-desc">Interactive chat interface to test various prompts and models with different configurations.</div>
+            </div>
+          </div>
+          <div class="card-url">…/generativeaihub → AI Playground</div>
+          <a class="card-action" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+        <a class="card" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon orange">✏️</div>
+            <div>
+              <div class="card-name">Prompt Editor</div>
+              <div class="card-desc">Create prompts and reusable prompt templates for consistent, repeatable AI interactions.</div>
+            </div>
+          </div>
+          <div class="card-url">…/generativeaihub → Prompt Editor</div>
+          <a class="card-action" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+        <a class="card" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon blue">🔗</div>
+            <div>
+              <div class="card-name">Orchestration Service</div>
+              <div class="card-desc">Design and create multi-step orchestration workflows combining LLMs and tools.</div>
+            </div>
+          </div>
+          <div class="card-url">…/generativeaihub → Orchestration</div>
+          <a class="card-action" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+        <a class="card" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon green">🗂️</div>
+            <div>
+              <div class="card-name">Prompt Management</div>
+              <div class="card-desc">Manage and maintain a registry of prompts for sharing and reuse across teams and projects.</div>
+            </div>
+          </div>
+          <div class="card-url">…/generativeaihub → Prompt Registry</div>
+          <a class="card-action" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com/aic/index.html#/generativeaihub?workspace=sap-genai-xl&resourceGroup=default&/g/modelLibrary" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+        <a class="card" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com" target="_blank" rel="noopener">
+          <div class="card-top">
+            <div class="card-icon orange">⚡</div>
+            <div>
+              <div class="card-name">Optimization</div>
+              <div class="card-desc">Optimize prompts and evaluate your AI workflows for quality, accuracy, and cost-efficiency.</div>
+            </div>
+          </div>
+          <div class="card-url">sapit-core-playground-vole.ai-launchpad…</div>
+          <a class="card-action" href="https://sapit-core-playground-vole.ai-launchpad.prod.eu-central-1.aws.apps.ml.hana.ondemand.com" target="_blank" rel="noopener">Open ↗</a>
+        </a>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    SAP AI Resources · Bookmark and explore · Last updated June 2026
+  </footer>
+
+</body>
+</html>
